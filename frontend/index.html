@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Metadados — Pesquisa de Opinião</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#f4f6fb;--white:#fff;--border:#e2e5ef;--border2:#cdd2e4;
+  --text:#1a1d2e;--muted:#7b80a0;--light:#f0f2f9;
+  --blue:#2563eb;--blue-light:#eff4ff;--blue-dark:#1d4ed8;
+  --green:#16a34a;--green-light:#f0fdf4;
+  --red:#dc2626;--red-light:#fef2f2;
+  --yellow:#d97706;--yellow-light:#fffbeb;
+  --orange:#ea580c;--orange-light:#fff7ed;
+  --purple:#7c3aed;--purple-light:#f5f3ff;
+  --gray:#6b7280;--gray-light:#f9fafb;
+  --teal:#0d9488;--teal-light:#f0fdfa;
+  --font:'Inter',system-ui,-apple-system,sans-serif;--mono:'JetBrains Mono',monospace;
+  --radius:12px;
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 4px 16px rgba(0,0,0,.05);
+  --shadow-lg:0 4px 24px rgba(0,0,0,.11),0 1px 4px rgba(0,0,0,.05);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;}
+.hidden{display:none!important;}
+.page{display:none;min-height:100vh;}
+.page.active{display:flex;}
+
+/* LOGIN */
+#page-login{align-items:center;justify-content:center;background:linear-gradient(135deg,#1e293b,#0f172a 50%,#1e1b4b);position:relative;overflow:hidden;}
+#page-login::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle at 20% 50%,rgba(37,99,235,.18),transparent 50%),radial-gradient(circle at 80% 20%,rgba(124,58,237,.12),transparent 40%);pointer-events:none;}
+.login-box{background:var(--white);border-radius:20px;padding:48px 44px;width:420px;max-width:95vw;box-shadow:var(--shadow-lg);position:relative;z-index:1;animation:fadeUp .4s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.login-logo{text-align:center;margin-bottom:32px;}
+.login-logo .icon{width:64px;height:64px;background:linear-gradient(135deg,var(--blue),var(--purple));border-radius:18px;display:inline-flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:14px;box-shadow:0 4px 20px rgba(37,99,235,.35);}
+.login-logo h1{font-size:1.7rem;font-weight:800;letter-spacing:-.5px;}
+.login-logo h1 span{color:var(--blue);}
+.login-logo p{color:var(--muted);font-size:.85rem;margin-top:4px;}
+.login-err{background:var(--red-light);border:1px solid #fca5a5;color:var(--red);border-radius:8px;padding:10px 14px;font-size:.85rem;margin-bottom:16px;display:none;}
+
+/* FORMS */
+.form-field{margin-bottom:16px;}
+.form-field label{display:block;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:6px;}
+.form-field input,.form-field select,.form-field textarea{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:9px;font-family:var(--font);font-size:.93rem;color:var(--text);background:var(--white);transition:border-color .2s,box-shadow .2s;outline:none;}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.form-field select{cursor:pointer;}
+.form-row{display:grid;gap:12px;}
+.form-row.cols2{grid-template-columns:1fr 1fr;}
+.form-row.cols3{grid-template-columns:1fr 1fr 1fr;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:9px;border:none;font-family:var(--font);font-size:.88rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.btn-primary{background:var(--blue);color:#fff;}
+.btn-primary:hover{background:var(--blue-dark);transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,99,235,.3);}
+.btn-full{width:100%;}
+.btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--border);}
+.btn-ghost:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light);}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-danger:hover{background:#b91c1c;}
+.btn-success{background:var(--green);color:#fff;}
+.btn-success:hover{background:#15803d;}
+.btn-warning{background:var(--yellow);color:#fff;}
+.btn-teal{background:var(--teal);color:#fff;}
+.btn-teal:hover{background:#0f766e;}
+.btn-purple{background:var(--purple);color:#fff;}
+.btn-purple:hover{background:#6d28d9;}
+.btn-sm{padding:6px 12px;font-size:.78rem;border-radius:7px;}
+.btn-xs{padding:4px 9px;font-size:.72rem;border-radius:6px;}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;box-shadow:none!important;}
+
+/* APP LAYOUT */
+#page-app{flex-direction:column;}
+.topbar{background:var(--white);border-bottom:1px solid var(--border);height:58px;display:flex;align-items:center;padding:0 22px;gap:14px;position:sticky;top:0;z-index:50;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.topbar-logo{font-size:1.05rem;font-weight:800;letter-spacing:-.5px;display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.topbar-logo .dot{width:8px;height:8px;border-radius:50%;background:var(--blue);display:inline-block;}
+.topbar-logo span{color:var(--blue);}
+.topbar-nav{display:flex;gap:3px;margin-left:16px;flex-wrap:wrap;}
+.nav-btn{padding:5px 13px;border-radius:7px;border:none;background:transparent;font-family:var(--font);font-size:.82rem;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s;}
+.nav-btn:hover{background:var(--light);color:var(--text);}
+.nav-btn.active{background:var(--blue-light);color:var(--blue);font-weight:600;}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.user-chip{display:flex;align-items:center;gap:7px;padding:4px 11px 4px 4px;background:var(--light);border-radius:20px;font-size:.8rem;font-weight:500;}
+.user-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;text-transform:uppercase;flex-shrink:0;}
+.role-badge{font-size:.62rem;padding:2px 7px;border-radius:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+.role-admin{background:var(--purple-light);color:var(--purple);}
+.role-gestor{background:var(--teal-light);color:var(--teal);}
+.role-pesq{background:var(--blue-light);color:var(--blue);}
+.main-content{padding:24px 22px;max-width:1380px;width:100%;margin:0 auto;}
+.view{display:none;}
+.view.active{display:block;}
+.section-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;gap:12px;flex-wrap:wrap;}
+.section-title{font-size:1.28rem;font-weight:700;letter-spacing:-.3px;}
+.section-title small{display:block;font-size:.76rem;font-weight:400;color:var(--muted);margin-top:2px;}
+
+/* CARDS */
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);}
+.stat-grid{display:grid;gap:12px;margin-bottom:20px;}
+.sg6{grid-template-columns:repeat(6,1fr);}
+.sg4{grid-template-columns:repeat(4,1fr);}
+.sg3{grid-template-columns:repeat(3,1fr);}
+.sg2{grid-template-columns:repeat(2,1fr);}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);}
+.stat-card .num{font-size:1.65rem;font-weight:800;line-height:1;}
+.stat-card .lbl{font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:4px;font-weight:500;}
+.s-total .num{color:var(--text);}
+.s-disp .num{color:var(--green);}
+.s-inex .num{color:var(--red);}
+.s-ocup .num{color:var(--yellow);}
+.s-nat .num{color:var(--muted);}
+.s-atend .num{color:var(--purple);}
+.s-blue .num{color:var(--blue);}
+.s-teal .num{color:var(--teal);}
+.s-orange .num{color:var(--orange);}
+
+/* TABLES */
+.table-card{overflow:hidden;}
+.table-toolbar{display:flex;gap:8px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.search-wrap{flex:1;min-width:180px;position:relative;}
+.search-wrap input{padding-left:34px;border-radius:8px;border:1.5px solid var(--border);padding-top:8px;padding-bottom:8px;font-size:.85rem;}
+.search-wrap input:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.si{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;font-size:.9rem;}
+.filter-chip{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);font-family:var(--font);font-size:.72rem;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s;}
+.filter-chip:hover{border-color:var(--blue);color:var(--blue);}
+.filter-chip.active{background:var(--blue-light);border-color:var(--blue);color:var(--blue);}
+table{width:100%;border-collapse:collapse;}
+thead tr{border-bottom:1px solid var(--border);background:var(--gray-light);}
+th{padding:9px 14px;text-align:left;font-size:.67rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);font-weight:600;}
+td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:.86rem;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--gray-light);}
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--border);font-size:.78rem;color:var(--muted);}
+.pg-btns{display:flex;gap:3px;}
+.pg-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:var(--white);font-family:var(--font);font-size:.76rem;cursor:pointer;transition:all .15s;}
+.pg-btn:hover,.pg-btn.active{border-color:var(--blue);color:var(--blue);background:var(--blue-light);}
+
+/* TAGS */
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:.68rem;font-weight:600;white-space:nowrap;}
+.tag::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.tag-disponivel{background:var(--green-light);color:var(--green);}
+.tag-disponivel::before{background:var(--green);}
+.tag-inexistente{background:var(--red-light);color:var(--red);}
+.tag-inexistente::before{background:var(--red);}
+.tag-ocupado{background:var(--yellow-light);color:var(--yellow);}
+.tag-ocupado::before{background:var(--yellow);}
+.tag-nao-atendeu{background:var(--gray-light);color:var(--gray);border:1px solid var(--border);}
+.tag-nao-atendeu::before{background:var(--gray);}
+.tag-atendeu{background:var(--purple-light);color:var(--purple);}
+.tag-atendeu::before{background:var(--purple);}
+.tag-ativo{background:var(--green-light);color:var(--green);}
+.tag-pausado{background:var(--yellow-light);color:var(--yellow);}
+.tag-finalizado{background:var(--gray-light);color:var(--gray);}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);backdrop-filter:blur(3px);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--white);border-radius:16px;padding:26px;width:90%;max-width:560px;max-height:92vh;overflow-y:auto;box-shadow:var(--shadow-lg);transform:scale(.96) translateY(10px);transition:transform .2s;}
+.modal-lg{max-width:820px;}
+.modal-xl{max-width:1100px;}
+.overlay.open .modal{transform:scale(1) translateY(0);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.modal-title{font-size:1rem;font-weight:700;}
+.modal-close{width:28px;height:28px;border-radius:7px;border:none;background:var(--light);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:all .15s;}
+.modal-close:hover{background:var(--border);color:var(--text);}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
+
+/* TOAST */
+.toast-wrap{position:fixed;bottom:22px;right:22px;z-index:999;display:flex;flex-direction:column;gap:7px;}
+.toast{background:var(--text);color:#fff;padding:11px 16px;border-radius:10px;font-size:.83rem;box-shadow:var(--shadow-lg);transform:translateX(120%);transition:transform .3s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;gap:7px;max-width:300px;}
+.toast.show{transform:translateX(0);}
+.toast.success{background:#16a34a;}
+.toast.error{background:var(--red);}
+.toast.warn{background:var(--yellow);}
+.toast.info{background:var(--blue);}
+
+/* UPLOAD */
+.upload-area{border:2px dashed var(--border2);border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:all .2s;background:var(--gray-light);}
+.upload-area:hover,.upload-area.drag{border-color:var(--blue);background:var(--blue-light);}
+.upload-area .uicon{font-size:1.8rem;margin-bottom:7px;}
+.upload-area p{color:var(--muted);font-size:.85rem;}
+
+/* USERS */
+.users-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;}
+.user-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px;}
+.user-card-head{display:flex;align-items:center;gap:11px;}
+.u-avatar{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;font-weight:700;font-size:.95rem;display:flex;align-items:center;justify-content:center;text-transform:uppercase;flex-shrink:0;}
+.u-name{font-weight:600;font-size:.92rem;}
+.u-login{font-size:.76rem;color:var(--muted);font-family:var(--mono);}
+.user-card-foot{display:flex;justify-content:space-between;align-items:center;}
+
+/* ARQUIVO CARD */
+.arquivo-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);margin-bottom:10px;}
+.arquivo-info{flex:1;}
+.arquivo-info strong{font-size:.92rem;display:block;}
+.arquivo-info span{font-size:.76rem;color:var(--muted);}
+.arquivo-stats{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;}
+.astt{font-size:.7rem;padding:2px 8px;border-radius:7px;font-weight:600;}
+
+/* PESQUISAS */
+.pesq-card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:var(--shadow);margin-bottom:12px;transition:box-shadow .2s;}
+.pesq-card:hover{box-shadow:var(--shadow-lg);}
+.pesq-card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;gap:10px;}
+.pesq-title{font-weight:700;font-size:1rem;}
+.pesq-meta{font-size:.76rem;color:var(--muted);margin-top:3px;}
+.pesq-stats{display:flex;gap:10px;flex-wrap:wrap;}
+.pesq-stat{font-size:.76rem;color:var(--muted);}
+.pesq-stat strong{color:var(--text);font-weight:600;}
+.pesq-progress{margin-top:12px;}
+.progress-bar{height:6px;background:var(--light);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--blue),var(--purple));transition:width .5s ease;}
+.pesq-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
+
+/* MODELO CARD */
+.modelo-card{background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);}
+.modelo-card:hover{border-color:var(--purple);box-shadow:var(--shadow-lg);}
+.modelo-icon{width:40px;height:40px;border-radius:10px;background:var(--purple-light);color:var(--purple);font-size:1.2rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.modelo-info{flex:1;}
+.modelo-name{font-weight:700;font-size:.92rem;}
+.modelo-sub{font-size:.75rem;color:var(--muted);margin-top:2px;}
+
+/* DASHBOARD GESTOR */
+.alert-card{border-radius:var(--radius);padding:14px 16px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px;}
+.alert-red{background:var(--red-light);border:1px solid #fca5a5;}
+.alert-yellow{background:var(--yellow-light);border:1px solid #fcd34d;}
+.alert-icon{font-size:1.2rem;flex-shrink:0;margin-top:1px;}
+.alert-text strong{font-size:.85rem;font-weight:700;display:block;}
+.alert-text span{font-size:.78rem;color:var(--muted);}
+.prod-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.prod-row:last-child{border-bottom:none;}
+.mini-bar{height:7px;border-radius:4px;background:var(--light);flex:1;overflow:hidden;}
+.mini-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--blue),var(--purple));}
+.badge-acima{background:var(--green-light);color:var(--green);padding:2px 8px;border-radius:10px;font-size:.68rem;font-weight:700;}
+.badge-media{background:var(--blue-light);color:var(--blue);padding:2px 8px;border-radius:10px;font-size:.68rem;font-weight:700;}
+.badge-abaixo{background:var(--red-light);color:var(--red);padding:2px 8px;border-radius:10px;font-size:.68rem;font-weight:700;}
+
+/* ENTREVISTA — UMA PERGUNTA POR VEZ */
+#page-entrev,#page-gestor-flow{flex-direction:column;background:var(--bg);}
+#page-gestor{flex-direction:column;}
+.gestor-main{flex:1;overflow-y:auto;width:100%;}
+.entrev-topbar{background:var(--white);border-bottom:1px solid var(--border);height:58px;display:flex;align-items:center;padding:0 22px;gap:14px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.pesq-select-screen{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;}
+.pesq-select-wrap{width:100%;max-width:700px;}
+.pesq-select-wrap h2{font-size:1.3rem;font-weight:700;margin-bottom:6px;}
+.pesq-select-wrap p{color:var(--muted);font-size:.87rem;margin-bottom:22px;}
+.pesq-btn-card{background:var(--white);border:2px solid var(--border);border-radius:14px;padding:18px 20px;cursor:pointer;transition:all .18s;margin-bottom:10px;display:flex;align-items:center;gap:14px;}
+.pesq-btn-card:hover{border-color:var(--blue);box-shadow:var(--shadow-lg);}
+.pesq-btn-card .pi{width:44px;height:44px;border-radius:12px;background:var(--blue-light);color:var(--blue);font-size:1.3rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.pesq-btn-card .pt{font-weight:600;font-size:.95rem;}
+.pesq-btn-card .pm{font-size:.76rem;color:var(--muted);margin-top:2px;}
+
+/* TELA DE ENTREVISTA ATIVA — DOIS PAINÉIS */
+.entrev-screen{flex:1;display:flex;gap:0;overflow:hidden;height:calc(100vh - 58px);}
+.entrev-left{width:300px;flex-shrink:0;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px;overflow-y:auto;}
+.entrev-right{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;}
+.dialer-loc-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:var(--blue-light);border-radius:20px;font-size:.75rem;font-weight:600;color:var(--blue);margin-bottom:14px;}
+.dialer-num-box{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;margin-bottom:14px;min-height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.dialer-number{font-family:var(--mono);font-size:1.6rem;font-weight:500;letter-spacing:1.5px;color:var(--text);line-height:1;}
+.dialer-sub{font-size:.74rem;color:var(--muted);margin-top:4px;}
+.dialer-flags{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:12px;}
+.flag-btn{padding:7px;border-radius:8px;border:1.5px solid var(--border);background:var(--white);font-family:var(--font);font-size:.74rem;font-weight:600;cursor:pointer;transition:all .15s;color:var(--muted);text-align:center;}
+.flag-btn.fb-ocup:hover,.flag-btn.fb-ocup.sel{border-color:var(--yellow);color:var(--yellow);background:var(--yellow-light);}
+.flag-btn.fb-nat:hover,.flag-btn.fb-nat.sel{border-color:var(--gray);color:var(--gray);background:var(--gray-light);}
+.flag-btn.fb-inex:hover,.flag-btn.fb-inex.sel{border-color:var(--red);color:var(--red);background:var(--red-light);}
+.btn-novo-num{width:100%;padding:12px;border-radius:11px;background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;border:none;font-family:var(--font);font-size:.92rem;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 4px 14px rgba(37,99,235,.25);}
+.btn-novo-num:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(37,99,235,.35);}
+.btn-novo-num:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;}
+.entrev-counter{font-size:.7rem;color:var(--muted);text-align:center;margin-top:6px;}
+
+/* UMA PERGUNTA POR VEZ */
+.quest-flow{flex:1;display:flex;flex-direction:column;}
+.quest-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+.quest-progresso{font-size:.8rem;color:var(--muted);}
+.quest-progress-bar{height:5px;background:var(--light);border-radius:3px;overflow:hidden;margin-bottom:24px;}
+.quest-progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--blue),var(--purple));transition:width .4s ease;}
+.pergunta-single{flex:1;display:flex;flex-direction:column;animation:slideIn .25s ease;}
+@keyframes slideIn{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
+.pnum-badge{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--blue);background:var(--blue-light);padding:3px 10px;border-radius:8px;display:inline-block;margin-bottom:10px;}
+.ptexto-big{font-size:1.2rem;font-weight:700;line-height:1.4;margin-bottom:6px;}
+.ptipo-badge{font-size:.72rem;color:var(--muted);margin-bottom:20px;}
+.opcoes-lista{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;}
+.opcao-item{padding:13px 16px;border-radius:11px;border:2px solid var(--border);background:var(--white);font-family:var(--font);font-size:.92rem;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:12px;color:var(--text);}
+.opcao-item:hover{border-color:var(--blue);background:var(--blue-light);transform:translateX(3px);}
+.opcao-item.selected{border-color:var(--blue);background:var(--blue-light);color:var(--blue);font-weight:600;}
+.opcao-item.selected .on{background:var(--blue);color:#fff;}
+.on{width:26px;height:26px;border-radius:7px;background:var(--light);font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--muted);transition:all .18s;}
+.quest-nav{display:flex;gap:8px;align-items:center;margin-top:auto;padding-top:16px;border-top:1px solid var(--border);}
+.quest-minimap{display:flex;gap:3px;flex-wrap:wrap;margin-top:14px;}
+.qm-dot{width:20px;height:20px;border-radius:5px;border:2px solid var(--border);background:var(--white);cursor:pointer;transition:all .15s;font-size:.62rem;font-weight:700;display:flex;align-items:center;justify-content:center;color:var(--muted);}
+.qm-dot.respondida{background:var(--blue-light);border-color:var(--blue);color:var(--blue);}
+.qm-dot.atual{background:var(--blue);border-color:var(--blue-dark);color:#fff;}
+
+/* GRÁFICOS */
+.chart-toggle{display:flex;gap:6px;margin-bottom:14px;}
+.chart-toggle-btn{padding:5px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);font-family:var(--font);font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;color:var(--muted);}
+.chart-toggle-btn.active{background:var(--blue-light);border-color:var(--blue);color:var(--blue);}
+.pergunta-result-card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px;}
+.pr-titulo{font-weight:700;font-size:.92rem;margin-bottom:4px;}
+.pr-tipo{font-size:.7rem;color:var(--blue);background:var(--blue-light);padding:1px 7px;border-radius:7px;display:inline-block;font-weight:600;margin-bottom:14px;}
+
+/* CRUZAMENTO */
+.cruzamento-builder{background:var(--light);border-radius:12px;padding:16px;margin-bottom:16px;}
+.cruzamento-filtros{display:flex;flex-direction:column;gap:8px;}
+.cruzamento-filtro-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.cruz-table td,.cruz-table th{transition:background .2s;}
+
+/* ALERTAS */
+@keyframes pulse-red{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.4)}50%{box-shadow:0 0 0 6px rgba(220,38,38,0)}}
+.alert-pulse{animation:pulse-red 2s infinite;}
+
+/* MISC */
+.divider{height:1px;background:var(--border);margin:18px 0;}
+.empty-state{text-align:center;padding:50px 20px;color:var(--muted);}
+.empty-state .ei{font-size:2.8rem;margin-bottom:10px;opacity:.35;}
+.empty-state p{font-size:.86rem;}
+.select-inline{padding:7px 11px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:.83rem;outline:none;color:var(--text);background:var(--white);cursor:pointer;}
+.select-inline:focus{border-color:var(--blue);}
+.config-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
+.config-row:last-child{border-bottom:none;}
+.config-label{font-size:.88rem;font-weight:500;}
+.config-desc{font-size:.76rem;color:var(--muted);margin-top:2px;}
+.config-input{display:flex;align-items:center;gap:8px;}
+
+/* Radio cards — modalidade de coleta */
+.radio-card{flex:1;display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:all .18s;background:var(--white);}
+.radio-card:hover{border-color:var(--blue);background:var(--blue-light);}
+.radio-card input[type=radio]{display:none;}
+.radio-card input[type=radio]:checked~.rc-label{color:var(--blue);}
+.radio-card:has(input:checked){border-color:var(--blue);background:var(--blue-light);}
+.rc-icon{font-size:1.5rem;line-height:1;}
+.rc-label{font-weight:700;font-size:.9rem;color:var(--text);}
+.rc-desc{font-size:.72rem;color:var(--muted);line-height:1.4;}
+
+/* Toggle switches */
+.toggle{position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:20px;cursor:pointer;transition:.2s;}
+.toggle-slider::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
+.toggle input:checked+.toggle-slider{background:var(--blue);}
+.toggle input:checked+.toggle-slider::before{transform:translateX(16px);}
+
+/* Tela presencial — apenas questionário */
+.presencial-screen{display:flex;flex-direction:column;height:calc(100vh - 58px);overflow:hidden;}
+.presencial-topbar-info{background:var(--blue-light);border-bottom:1px solid var(--blue);padding:10px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.presencial-pesq-nome{font-weight:700;font-size:.95rem;color:var(--blue);}
+.presencial-counter{font-size:.78rem;color:var(--muted);}
+.presencial-content{flex:1;overflow-y:auto;padding:20px 18px;max-width:680px;width:100%;margin:0 auto;}
+.presencial-nav{background:var(--white);border-top:1px solid var(--border);padding:12px 18px;display:flex;gap:10px;justify-content:space-between;align-items:center;}
+.presencial-select-screen{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;}
+.tag-modalidade{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:10px;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.tag-telefone{background:#dbeafe;color:#1d4ed8;}
+.tag-presencial{background:#dcfce7;color:#15803d;}
+.config-input input{width:80px;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:.88rem;text-align:center;outline:none;}
+.config-input input:focus{border-color:var(--blue);}
+.tabs{display:flex;gap:3px;border-bottom:2px solid var(--border);margin-bottom:20px;}
+.tab-btn{padding:8px 16px;border:none;background:transparent;font-family:var(--font);font-size:.85rem;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600;}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+/* FILTROS PESQUISAS */
+.pesq-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;padding:14px;background:var(--white);border-radius:12px;border:1px solid var(--border);box-shadow:var(--shadow);}
+
+/* DROPDOWN MENU */
+.dropdown{position:relative;}
+.dropdown-trigger{cursor:pointer;}
+.dropdown-menu{position:absolute;top:calc(100% + 6px);left:0;background:var(--white);border:1px solid var(--border);border-radius:11px;box-shadow:var(--shadow-lg);min-width:190px;z-index:100;opacity:0;pointer-events:none;transform:translateY(-6px);transition:all .18s;}
+.dropdown-menu.open{opacity:1;pointer-events:all;transform:translateY(0);}
+.dropdown-item{display:flex;align-items:center;gap:9px;padding:9px 14px;font-size:.84rem;font-weight:500;cursor:pointer;color:var(--text);border-radius:8px;margin:3px;transition:background .12s;}
+.dropdown-item:hover{background:var(--light);}
+.dropdown-item .di-icon{font-size:1rem;width:20px;text-align:center;}
+.dropdown-sep{height:1px;background:var(--border);margin:4px 0;}
+.nav-btn.has-dropdown{display:flex;align-items:center;gap:5px;}
+.nav-btn.has-dropdown::after{content:'▾';font-size:.65rem;opacity:.6;}
+
+/* TOGGLE SWITCH */
+.toggle-wrap{display:flex;align-items:center;gap:8px;}
+.toggle{position:relative;width:36px;height:20px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;position:absolute;}
+.toggle-slider{position:absolute;inset:0;background:var(--border2);border-radius:20px;cursor:pointer;transition:background .2s;}
+.toggle-slider::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s;}
+.toggle input:checked+.toggle-slider{background:var(--blue);}
+.toggle input:checked+.toggle-slider::before{transform:translateX(16px);}
+.toggle-label{font-size:.78rem;color:var(--muted);font-weight:500;}
+
+/* ALTERNÂNCIA DE PERFIL */
+.perfil-switch{display:flex;gap:4px;background:var(--light);border-radius:9px;padding:3px;}
+.perfil-btn{padding:4px 11px;border-radius:7px;border:none;font-family:var(--font);font-size:.73rem;font-weight:600;cursor:pointer;background:transparent;color:var(--muted);transition:all .15s;}
+.perfil-btn.active{background:var(--white);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.perfil-btn:hover:not(.active){color:var(--text);}
+
+/* RELATÓRIO — controles por pergunta */
+.prc-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.prc-type-btn{padding:3px 10px;border-radius:14px;border:1.5px solid var(--border);background:var(--white);font-family:var(--font);font-size:.7rem;font-weight:600;cursor:pointer;transition:all .13s;color:var(--muted);}
+.prc-type-btn.active{background:var(--blue-light);border-color:var(--blue);color:var(--blue);}
+
+/* PRINT STYLES */
+@media print{
+  .topbar,.modal-close,.modal-footer,.entrev-topbar,.btn,
+  .chart-toggle,.prc-bar,.pesq-actions,.pesq-filters,
+  nav,.topbar-right,.overlay,.tabs,
+  #relStats,#relCidadeFiltros{display:none!important;}
+  body{background:#fff!important;font-size:11pt;}
+  .modal{position:static!important;width:100%!important;max-width:100%!important;
+    box-shadow:none!important;border-radius:0!important;padding:0!important;
+    overflow:visible!important;max-height:none!important;}
+  .modal-header{padding:0!important;margin-bottom:12pt!important;}
+  .tab-content{display:block!important;}
+  #rt-produtividade,#rt-cruzamento,#rt-exportar{display:none!important;}
+  #rt-resultados{display:block!important;}
+  .pergunta-result-card{break-inside:avoid;page-break-inside:avoid;
+    border:1px solid #ccc!important;margin-bottom:14pt;padding:10pt!important;
+    border-radius:6pt;}
+  .pergunta-result-card > div{flex-wrap:nowrap!important;}
+  canvas{max-width:160px!important;max-height:160px!important;}
+  #print-header{display:block!important;border-bottom:2px solid #1e40af!important;
+    margin-bottom:16pt!important;padding-bottom:10pt!important;}
+  #printTitle{font-size:16pt!important;color:#1e3a8a!important;}
+  #printMeta{font-size:9pt!important;color:#475569!important;margin-top:4pt;}
+  .pr-titulo{font-size:10pt!important;font-weight:700!important;}
+  .pr-tipo{font-size:8pt!important;}
+  a[href]:after{content:""!important;}
+  @page{margin:1.5cm 2cm;}
+}
+#print-header{display:none;}
+</style>
+</head>
+<body>
+
+<!-- ════ LOGIN ════ -->
+<div id="page-login" class="page active">
+  <div class="login-box">
+    <div class="login-logo">
+      <img id="loginLogoImg" src="" alt="Metadados" style="height:80px;margin-bottom:10px;display:block;margin-left:auto;margin-right:auto;">
+      <p style="color:var(--muted);font-size:.82rem;margin-top:2px;">Pesquisa de Opinião — Sistema de Campo</p>
+    </div>
+    <div class="login-err" id="loginErr">Usuário ou senha incorretos.</div>
+    <div class="form-field"><label>Usuário</label><input type="text" id="loginUser" placeholder="Digite seu usuário" autocomplete="username"></div>
+    <div class="form-field"><label>Senha</label><input type="password" id="loginPass" placeholder="••••••••"></div>
+    <button class="btn btn-primary btn-full" onclick="doLogin()" style="margin-top:4px;padding:13px;font-size:.95rem;">Entrar</button>
+  </div>
+</div>
+
+<!-- ════ APP ADMIN ════ -->
+<div id="page-app" class="page">
+  <div class="topbar">
+    <div class="topbar-logo"><img class="sys-logo" src="" alt="Metadados" style="height:30px;"></div>
+    <nav class="topbar-nav" id="adminNav">
+      <button class="nav-btn active" onclick="showView('dashboard')" data-view="dashboard">Dashboard</button>
+      <!-- Dropdown Cadastro -->
+      <div class="dropdown" id="ddCadastro">
+        <button class="nav-btn has-dropdown" onclick="toggleDD('ddCadastro')" data-view-group="cadastro">Cadastro</button>
+        <div class="dropdown-menu" id="ddCadastroMenu">
+          <div class="dropdown-item" onclick="showView('modelos');closeAllDD()"><span class="di-icon">📝</span>Modelos de Questionário</div>
+          <div class="dropdown-item" onclick="showView('regioes');closeAllDD()"><span class="di-icon">🗺</span>Regiões</div>
+          <div class="dropdown-item" onclick="showView('arquivos');closeAllDD()"><span class="di-icon">📁</span>Base de Contatos</div>
+        </div>
+      </div>
+      <!-- Dropdown Gestão -->
+      <div class="dropdown" id="ddGestao">
+        <button class="nav-btn has-dropdown" onclick="toggleDD('ddGestao')" data-view-group="gestao">Gestão</button>
+        <div class="dropdown-menu" id="ddGestaoMenu">
+          <div class="dropdown-item" onclick="showView('pesquisas');closeAllDD()"><span class="di-icon">📋</span>Pesquisas</div>
+          <div class="dropdown-item" onclick="showView('numeros');closeAllDD()"><span class="di-icon">📞</span>Números</div>
+          <div class="dropdown-item" onclick="showView('usuarios');closeAllDD()"><span class="di-icon">👥</span>Usuários</div>
+          <div class="dropdown-sep"></div>
+          <div class="dropdown-item" onclick="showView('configuracoes');closeAllDD()"><span class="di-icon">⚙️</span>Configurações</div>
+        </div>
+      </div>
+      <button class="nav-btn" onclick="showView('gestor_dash')" data-view="gestor_dash">📊 Monitoramento</button>
+    </nav>
+    <div class="topbar-right">
+      <div class="perfil-switch" id="perfilSwitch" title="Alternar visualização de perfil">
+        <button class="perfil-btn active" data-perfil="administrador" onclick="alternarPerfil('administrador',this)">Admin</button>
+        <button class="perfil-btn" data-perfil="gestor" onclick="alternarPerfil('gestor',this)">Gestor</button>
+        <button class="perfil-btn" data-perfil="pesquisador" onclick="alternarPerfil('pesquisador',this)">Pesq.</button>
+      </div>
+      <div class="user-chip"><div class="user-avatar" id="topAvatar">AD</div><span id="topName">Admin</span><span class="role-badge role-admin" id="topRoleBadge">Admin</span></div>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+  <div class="main-content">
+
+    <!-- DASHBOARD -->
+    <div class="view active" id="view-dashboard">
+      <div class="section-header">
+        <div class="section-title">Dashboard<small>Visão geral e produtividade</small></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="showView('pesquisas')">Ver Pesquisas</button>
+          <button class="btn btn-primary btn-sm" onclick="openArquivoModal()">+ Nova Base</button>
+        </div>
+      </div>
+      <div class="stat-grid sg6">
+        <div class="stat-card s-total"><div class="num" id="ds-total">0</div><div class="lbl">Números Total</div></div>
+        <div class="stat-card s-disp"><div class="num" id="ds-disp">0</div><div class="lbl">Disponível</div></div>
+        <div class="stat-card s-ocup"><div class="num" id="ds-ocup">0</div><div class="lbl">Ocupado</div></div>
+        <div class="stat-card s-nat"><div class="num" id="ds-nat">0</div><div class="lbl">Não Atendeu</div></div>
+        <div class="stat-card s-atend"><div class="num" id="ds-atend">0</div><div class="lbl">Atendeu</div></div>
+        <div class="stat-card s-blue"><div class="num" id="ds-pesquisas">0</div><div class="lbl">Pesquisas</div></div>
+      </div>
+      <div style="font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin:0 0 12px;">Filtrar Produtividade</div>
+      <div style="display:flex;gap:7px;margin-bottom:20px;flex-wrap:wrap;">
+        <button class="filter-chip active" data-df="hoje" onclick="setDayFilter('hoje',this)">Hoje</button>
+        <button class="filter-chip" data-df="7" onclick="setDayFilter('7',this)">7 dias</button>
+        <button class="filter-chip" data-df="30" onclick="setDayFilter('30',this)">30 dias</button>
+        <button class="filter-chip" data-df="todos" onclick="setDayFilter('todos',this)">Tudo</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="card table-card">
+          <div style="padding:14px 18px;border-bottom:1px solid var(--border);font-weight:600;font-size:.88rem;">Ligações por Dia</div>
+          <table><thead><tr><th>Data</th><th>Total</th><th>Ocup.</th><th>N.At.</th><th>Atend.</th></tr></thead><tbody id="dashDayTbody"></tbody></table>
+        </div>
+        <div class="card table-card">
+          <div style="padding:14px 18px;border-bottom:1px solid var(--border);font-weight:600;font-size:.88rem;">Produtividade por Pesquisador</div>
+          <table><thead><tr><th>Pesquisador</th><th>Total</th><th>T.Médio</th><th>Status</th></tr></thead><tbody id="dashProdTbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PESQUISAS -->
+    <div class="view" id="view-pesquisas">
+      <div class="section-header">
+        <div class="section-title">Pesquisas<small>Gerenciar pesquisas e questionários</small></div>
+        <button class="btn btn-primary" onclick="openModalPesquisa()">+ Nova Pesquisa</button>
+      </div>
+      <div class="pesq-filters">
+        <div class="search-wrap" style="min-width:200px;"><span class="si">🔍</span><input type="text" id="pesqSearch" placeholder="Buscar por nome..." oninput="renderPesquisas()"></div>
+        <select class="select-inline" id="pesqFiltroEstado" onchange="pesqFiltroEstadoChange();renderPesquisas()"><option value="">Todos os estados</option></select>
+        <select class="select-inline" id="pesqFiltroCidade" onchange="renderPesquisas()"><option value="">Todas as cidades</option></select>
+        <select class="select-inline" id="pesqFiltroRegiao" onchange="renderPesquisas()"><option value="">Todas as regiões</option></select>
+        <input type="date" class="select-inline" id="pesqFiltroData" onchange="renderPesquisas()" title="Filtrar por data">
+        <select class="select-inline" id="pesqFiltroStatus" onchange="renderPesquisas()"><option value="">Todos os status</option><option value="ativo">Ativo</option><option value="pausado">Pausado</option><option value="finalizado">Finalizado</option></select>
+        <button class="btn btn-ghost btn-sm" onclick="limparFiltrosPesq()">✕ Limpar</button>
+      </div>
+      <div id="pesquisasList"></div>
+    </div>
+
+    <!-- MODELOS DE QUESTIONÁRIO -->
+    <div class="view" id="view-modelos">
+      <div class="section-header">
+        <div class="section-title">Modelos de Questionário<small>Reutilize perguntas em novas pesquisas</small></div>
+        <button class="btn btn-purple" onclick="openModalModelo()">+ Novo Modelo</button>
+      </div>
+      <div id="modelosList"></div>
+    </div>
+
+    <!-- REGIÕES -->
+    <div class="view" id="view-regioes">
+      <div class="section-header">
+        <div class="section-title">Regiões<small>Micro e Macrorregiões</small></div>
+        <button class="btn btn-primary" onclick="openModalRegiao()">+ Nova Região</button>
+      </div>
+      <div id="regioesList"></div>
+    </div>
+
+    <!-- ARQUIVOS / BASE DE CONTATOS -->
+    <div class="view" id="view-arquivos">
+      <div class="section-header">
+        <div class="section-title">Base de Contatos<small>Importar e gerenciar listas de telefones</small></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" onclick="openArquivoModal()">+ Importar CSV simples</button>
+          <button class="btn btn-primary" onclick="openImportacaoGrandeModal()">📋 Importar Lista Completa</button>
+          <button class="btn btn-teal" onclick="openCriarBaseModal()">🗂 Criar Base por Filtro</button>
+        </div>
+      </div>
+      <div id="arquivosList"></div>
+    </div>
+
+    <!-- NÚMEROS -->
+    <div class="view" id="view-numeros">
+      <div class="section-header"><div class="section-title">Números<small>Todos os telefones cadastrados</small></div></div>
+      <div class="card table-card">
+        <div class="table-toolbar">
+          <div class="search-wrap"><span class="si">🔍</span><input type="text" id="numSearch" placeholder="Buscar número, cidade..." oninput="renderNumeros()"></div>
+          <select id="numFilterEstado" onchange="renderNumeros()" class="select-inline"><option value="">Todos os estados</option></select>
+          <button class="filter-chip active" data-nf="todos" onclick="setNumFilter('todos',this)">Todos</button>
+          <button class="filter-chip" data-nf="disponivel" onclick="setNumFilter('disponivel',this)">Disponível</button>
+          <button class="filter-chip" data-nf="ocupado" onclick="setNumFilter('ocupado',this)">Ocupado</button>
+          <button class="filter-chip" data-nf="nao-atendeu" onclick="setNumFilter('nao-atendeu',this)">Não Atendeu</button>
+          <button class="filter-chip" data-nf="atendeu" onclick="setNumFilter('atendeu',this)">Atendeu</button>
+        </div>
+        <table><thead><tr><th>Telefone</th><th>Tipo</th><th>Estado</th><th>Cidade</th><th>Status</th><th>Arquivo</th></tr></thead><tbody id="numTbody"></tbody></table>
+        <div class="pagination"><span id="numInfo"></span><div class="pg-btns" id="numPg"></div></div>
+      </div>
+    </div>
+
+    <!-- USUÁRIOS -->
+    <div class="view" id="view-usuarios">
+      <div class="section-header">
+        <div class="section-title">Usuários<small>Gerenciar contas de acesso</small></div>
+        <button class="btn btn-primary" onclick="openUserModal()">+ Novo Usuário</button>
+      </div>
+      <div class="users-grid" id="usersGrid"></div>
+    </div>
+
+    <!-- MONITORAMENTO (GESTOR) — ACESSO ADMIN -->
+    <div class="view" id="view-gestor_dash">
+      <div class="section-header">
+        <div class="section-title">Monitoramento em Tempo Real<small>Dashboard de produtividade e alertas</small></div>
+        <button class="btn btn-ghost btn-sm" onclick="renderGestorDash('admin')">🔄 Atualizar</button>
+      </div>
+      <div class="stat-grid sg4" id="adminGdashStats"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div><div style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;">🚨 Alertas</div><div id="adminGdashAlertas"></div></div>
+        <div><div style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;">👥 Produtividade Hoje</div><div class="card" id="adminGdashProd" style="padding:16px;"></div></div>
+      </div>
+      <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;">📋 Pesquisas em Andamento</div>
+      <div id="adminGdashPesquisas"></div>
+    </div>
+
+    <!-- CONFIGURAÇÕES -->
+    <div class="view" id="view-configuracoes">
+      <div class="section-header"><div class="section-title">Configurações<small>Parâmetros do sistema</small></div></div>
+      <div class="card" style="max-width:620px;">
+        <div style="font-weight:700;font-size:.95rem;margin-bottom:20px;">⚙️ Alertas de Produtividade</div>
+
+        <div class="config-row">
+          <div>
+            <div class="config-label">Alerta de Inatividade</div>
+            <div class="config-desc">Alertar quando pesquisador ficar X min sem atividade</div>
+          </div>
+          <div class="config-input" style="gap:10px;">
+            <label class="toggle"><input type="checkbox" id="cfgAtivoInatividade" checked><span class="toggle-slider"></span></label>
+            <input type="number" id="cfgInatividade" min="1" max="120" value="15">
+            <span style="font-size:.82rem;color:var(--muted)">min</span>
+          </div>
+        </div>
+
+        <div class="config-row">
+          <div>
+            <div class="config-label">Alerta: Pesquisador lento</div>
+            <div class="config-desc">Alertar quando estiver X% acima da média da pesquisa</div>
+          </div>
+          <div class="config-input" style="gap:10px;">
+            <label class="toggle"><input type="checkbox" id="cfgAtivoAcima" checked><span class="toggle-slider"></span></label>
+            <input type="number" id="cfgAcima" min="10" max="200" value="30">
+            <span style="font-size:.82rem;color:var(--muted)">%</span>
+          </div>
+        </div>
+
+        <div class="config-row">
+          <div>
+            <div class="config-label">Alerta: Pesquisador muito rápido</div>
+            <div class="config-desc">Alertar quando estiver X% abaixo da média da pesquisa</div>
+          </div>
+          <div class="config-input" style="gap:10px;">
+            <label class="toggle"><input type="checkbox" id="cfgAtivoAbaixo" checked><span class="toggle-slider"></span></label>
+            <input type="number" id="cfgAbaixo" min="10" max="200" value="30">
+            <span style="font-size:.82rem;color:var(--muted)">%</span>
+          </div>
+        </div>
+
+        <div class="config-row">
+          <div>
+            <div class="config-label">Alerta: Tempo abaixo da média da pesquisa (%)</div>
+            <div class="config-desc">Alerta quando tempo médio do pesquisador for X% menor que a média geral da pesquisa em andamento</div>
+          </div>
+          <div class="config-input" style="gap:10px;">
+            <label class="toggle"><input type="checkbox" id="cfgAtivoAbaixoMedia" checked><span class="toggle-slider"></span></label>
+            <input type="number" id="cfgAbaixoMedia" min="5" max="100" value="30">
+            <span style="font-size:.82rem;color:var(--muted)">%</span>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;"><button class="btn btn-primary" onclick="salvarConfigs()">Salvar Configurações</button></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════ GESTOR PAGE ════ -->
+<div id="page-gestor" class="page">
+  <div class="topbar">
+    <div class="topbar-logo"><img class="sys-logo" src="" alt="Metadados" style="height:30px;"></div>
+    <nav class="topbar-nav">
+      <button class="nav-btn active" id="gNavDash" onclick="gestorGoDash()">Dashboard</button>
+      <button class="nav-btn" id="gNavPesq" onclick="showGestorView('gpesquisas')">Minhas Pesquisas</button>
+    </nav>
+    <div class="topbar-right">
+      <div class="user-chip"><div class="user-avatar" id="gestorAvatar">GS</div><span id="gestorName">Gestor</span><span class="role-badge role-gestor">Gestor</span></div>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+  <div class="gestor-main" id="gestorMain">
+    <div id="gestor-view-gdash" style="padding:24px 22px;max-width:1380px;width:100%;margin:0 auto;">
+      <div class="section-header">
+        <div class="section-title">Dashboard em Tempo Real<small>Monitoramento de pesquisas ativas</small></div>
+        <button class="btn btn-ghost btn-sm" onclick="renderGestorDash('gestor')">🔄 Atualizar</button>
+      </div>
+      <div class="stat-grid sg4" id="gdashStats"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div><div style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;">🚨 Alertas</div><div id="gdashAlertas"></div></div>
+        <div><div style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;">👥 Produtividade Hoje</div><div class="card" id="gdashProd" style="padding:16px;"></div></div>
+      </div>
+      <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;">📋 Pesquisas em Andamento</div>
+      <div id="gdashPesquisas"></div>
+    </div>
+    <div id="gestor-view-gpesquisas" style="display:none;padding:24px 22px;max-width:1380px;width:100%;margin:0 auto;">
+      <div class="section-header"><div class="section-title">Minhas Pesquisas<small>Clique para iniciar entrevistas</small></div></div>
+      <div id="gestorPesqList"></div>
+    </div>
+    <div id="gestor-view-entrevista" style="display:none;height:calc(100vh - 58px);"></div>
+  </div>
+</div>
+
+<!-- ════ PESQUISADOR PAGE ════ -->
+<div id="page-entrev" class="page">
+  <div class="entrev-topbar">
+    <div class="topbar-logo"><img class="sys-logo" src="" alt="Metadados" style="height:30px;"></div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
+      <div class="user-chip"><div class="user-avatar" id="entrevAvatar">EN</div><span id="entrevName">Pesquisador</span><span class="role-badge role-pesq">Pesquisador</span></div>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+  <div class="pesq-select-screen" id="pesqSelectScreen">
+    <div class="pesq-select-wrap">
+      <h2>📋 Suas Pesquisas</h2>
+      <p>Selecione a pesquisa que irá realizar hoje.</p>
+      <div id="pesqSelectList"></div>
+    </div>
+  </div>
+
+  <!-- Tela Telefone (existente) -->
+  <div class="entrev-screen hidden" id="entrevScreen">
+    <!-- Painel esquerdo: dialer -->
+    <div class="entrev-left">
+      <div class="dialer-loc-badge" id="dialerLocBadge">📍 —</div>
+      <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;">Número Atual</div>
+      <div class="dialer-num-box" id="dialerNumBox"><span style="color:var(--border2);font-size:.82rem;">Aguardando...</span></div>
+      <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;">Classificar Ligação</div>
+      <div class="dialer-flags" id="dialerFlags" style="display:none;">
+        <button class="flag-btn fb-ocup" data-s="ocupado" onclick="flagBtn(this)">🔴 Ocupado</button>
+        <button class="flag-btn fb-nat" data-s="nao-atendeu" onclick="flagBtn(this)">📵 N. Atendeu</button>
+        <button class="flag-btn fb-inex" data-s="inexistente" onclick="flagBtn(this)" style="grid-column:span 2;">❌ Inexistente</button>
+      </div>
+      <button class="btn-novo-num" id="btnNovoNum" onclick="novoNumero()" style="margin-top:6px;">📞 NOVO NÚMERO</button>
+      <div class="entrev-counter" id="entrevCounter"></div>
+      <!-- Mini mapa de perguntas -->
+      <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;">
+        <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:7px;">Perguntas</div>
+        <div class="quest-minimap" id="questMinimap"></div>
+      </div>
+      <div style="margin-top:auto;padding-top:12px;border-top:1px solid var(--border);">
+        <button class="btn btn-ghost btn-sm btn-full" onclick="voltarSelecao()">↩ Trocar pesquisa</button>
+      </div>
+    </div>
+    <!-- Painel direito: questionário -->
+    <div class="entrev-right" id="entrevRight"></div>
+  </div>
+
+  <!-- Tela Presencial — só questionário, otimizada para celular -->
+  <div class="presencial-screen hidden" id="presencialScreen">
+    <div class="presencial-topbar-info" id="presencialInfo">
+      <div>
+        <div class="presencial-pesq-nome" id="presencialNome">—</div>
+        <div class="presencial-counter" id="presencialCounter"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="voltarSelecao()">↩ Trocar</button>
+    </div>
+    <div class="presencial-content" id="presencialContent">
+      <!-- conteúdo renderizado dinamicamente -->
+    </div>
+    <div class="presencial-nav" id="presencialNav">
+      <!-- botões de navegação renderizados dinamicamente -->
+    </div>
+  </div>
+</div>
+
+<!-- ════ MODAIS ════ -->
+
+<!-- Modal Pesquisa -->
+<div class="overlay" id="modalPesquisa">
+  <div class="modal modal-lg">
+    <div class="modal-header"><div class="modal-title" id="mpTitle">📋 Nova Pesquisa</div><button class="modal-close" onclick="closeModal('modalPesquisa')">✕</button></div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="tp-info" onclick="switchModalTab('modalPesquisa','tp-info',this)">Informações</button>
+      <button class="tab-btn" data-tab="tp-perguntas" onclick="switchModalTab('modalPesquisa','tp-perguntas',this)">Perguntas</button>
+      <button class="tab-btn" data-tab="tp-pesquisadores" onclick="switchModalTab('modalPesquisa','tp-pesquisadores',this)">Pesquisadores</button>
+    </div>
+    <div class="tab-content active" id="tp-info">
+      <div class="form-row cols2"><div class="form-field"><label>Nome da Pesquisa *</label><input type="text" id="pNome" placeholder="Ex: Pesquisa Eleitoral 2026"></div><div class="form-field"><label>Data de Realização</label><input type="date" id="pData"></div></div>
+      <div class="form-field">
+        <label>Modalidade de Coleta *</label>
+        <div style="display:flex;gap:10px;margin-top:6px;">
+          <label class="radio-card" id="rcTelefone">
+            <input type="radio" name="pModalidade" value="telefone" checked onchange="onModalidadeChange()">
+            <span class="rc-icon">📞</span>
+            <span class="rc-label">Telefone</span>
+            <span class="rc-desc">Pesquisador usa discador com gerador de números</span>
+          </label>
+          <label class="radio-card" id="rcPresencial">
+            <input type="radio" name="pModalidade" value="presencial" onchange="onModalidadeChange()">
+            <span class="rc-icon">🚶</span>
+            <span class="rc-label">Presencial</span>
+            <span class="rc-desc">Tela simplificada no celular, só o questionário</span>
+          </label>
+        </div>
+      </div>
+      <div class="form-row cols2"><div class="form-field"><label>Meta de Entrevistas *</label><input type="number" id="pMeta" placeholder="Ex: 500" min="1"></div><div class="form-field" id="pTipoNumWrap"><label>Tipo de Número</label><select id="pTipoNum"><option value="">Todos</option><option value="celular">Celular</option><option value="fixo">Fixo</option><option value="empresa">Empresa</option></select></div></div>
+      <div class="form-row cols2"><div class="form-field"><label>Estado *</label><select id="pEstado" onchange="pLoadLocalidade()"><option value="">Selecione...</option></select></div><div class="form-field"><label>Cidade ou Região *</label><select id="pLocalidade"><option value="">Selecione o estado</option></select></div></div>
+      <div class="form-field"><label>Status</label><select id="pStatus"><option value="ativo">Ativo</option><option value="pausado">Pausado</option><option value="finalizado">Finalizado</option></select></div>
+    </div>
+    <div class="tab-content" id="tp-perguntas">
+      <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center;">
+        <select class="select-inline" id="pModeloSelect" style="flex:1;"><option value="">Usar modelo de questionário...</option></select>
+        <button class="btn btn-purple btn-sm" onclick="aplicarModelo()">Aplicar Modelo</button>
+      </div>
+      <div id="perguntasList"></div>
+      <button class="btn btn-ghost btn-sm" onclick="addPergunta()" style="margin-top:8px;">+ Adicionar Pergunta</button>
+    </div>
+    <div class="tab-content" id="tp-pesquisadores">
+      <p style="font-size:.83rem;color:var(--muted);margin-bottom:14px;">Selecione os pesquisadores e gestores habilitados:</p>
+      <div id="pesqUsersList"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modalPesquisa')">Cancelar</button><button class="btn btn-primary" onclick="salvarPesquisa()">Salvar Pesquisa</button></div>
+  </div>
+</div>
+
+<!-- Modal Modelo de Questionário -->
+<div class="overlay" id="modalModelo">
+  <div class="modal modal-lg">
+    <div class="modal-header"><div class="modal-title" id="mmoTitle">📝 Novo Modelo de Questionário</div><button class="modal-close" onclick="closeModal('modalModelo')">✕</button></div>
+    <div class="form-field"><label>Nome do Modelo *</label><input type="text" id="mmoNome" placeholder="Ex: Questionário Eleitoral Padrão"></div>
+    <div class="form-field"><label>Descrição</label><input type="text" id="mmoDesc" placeholder="Breve descrição..."></div>
+    <div style="font-weight:600;font-size:.88rem;margin-bottom:10px;margin-top:4px;">Perguntas do Modelo</div>
+    <div id="modeloPerguntasList"></div>
+    <button class="btn btn-ghost btn-sm" onclick="addModeloPergunta()" style="margin-top:8px;">+ Adicionar Pergunta</button>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modalModelo')">Cancelar</button><button class="btn btn-purple" onclick="salvarModelo()">Salvar Modelo</button></div>
+  </div>
+</div>
+
+<!-- Modal Região -->
+<div class="overlay" id="modalRegiao">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="mrTitle">🗺 Nova Região</div><button class="modal-close" onclick="closeModal('modalRegiao')">✕</button></div>
+    <div class="form-field"><label>Nome da Região *</label><input type="text" id="rNome" placeholder="Ex: Grande Porto Alegre"></div>
+    <div class="form-row cols2"><div class="form-field"><label>Tipo</label><select id="rTipo"><option value="micro">Microrregião</option><option value="macro">Macrorregião</option></select></div><div class="form-field"><label>Estado *</label><select id="rEstado" onchange="rLoadCidades()"><option value="">Selecione...</option></select></div></div>
+    <div class="form-field"><label>Cidades</label><select id="rCidades" multiple style="height:150px;"></select><div style="font-size:.72rem;color:var(--muted);margin-top:4px;">Segure Ctrl para múltiplas</div></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modalRegiao')">Cancelar</button><button class="btn btn-primary" onclick="salvarRegiao()">Salvar</button></div>
+  </div>
+</div>
+
+<!-- Modal Arquivo CSV -->
+<div class="overlay" id="modalArquivo">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">📁 Importar Base de Contatos</div><button class="modal-close" onclick="closeModal('modalArquivo')">✕</button></div>
+    <div class="form-row cols2"><div class="form-field"><label>Estado *</label><select id="csvEstado" onchange="loadCidadesModal()"><option value="">Selecione...</option></select></div><div class="form-field"><label>Cidade *</label><select id="csvCidade"><option value="">Selecione o estado</option></select></div></div>
+    <div class="form-field"><label>Tipo *</label><select id="csvTipo"><option value="celular">📱 Celular</option><option value="fixo">☎️ Fixo</option><option value="empresa">🏢 Empresa</option></select></div>
+    <div class="form-field"><label>Arquivo CSV</label>
+      <div class="upload-area" id="uploadArea" onclick="document.getElementById('csvFileInput').click()" ondrop="dropFile(event)" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')">
+        <div class="uicon">📄</div>
+        <p><strong>Clique para selecionar</strong> ou arraste aqui</p>
+        <p style="margin-top:3px;font-size:.74rem;">Uma coluna com DDD+número (ex: 11987654321)</p>
+        <input type="file" id="csvFileInput" accept=".csv,.txt" style="display:none" onchange="handleFileSelect(event)">
+      </div>
+      <div id="csvPreview" style="margin-top:8px;display:none;"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modalArquivo')">Cancelar</button><button class="btn btn-primary" onclick="importarCSV()">Importar</button></div>
+  </div>
+</div>
+
+<!-- Modal Usuário -->
+<div class="overlay" id="modalUsuario">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="uModalTitle">👤 Novo Usuário</div><button class="modal-close" onclick="closeModal('modalUsuario')">✕</button></div>
+    <div class="form-field"><label>Nome completo *</label><input type="text" id="uNome"></div>
+    <div class="form-row cols2"><div class="form-field"><label>Login *</label><input type="text" id="uLogin"></div><div class="form-field"><label>Senha *</label><input type="password" id="uSenha"></div></div>
+    <div class="form-field"><label>Perfil *</label><select id="uPerfil"><option value="pesquisador">Pesquisador</option><option value="gestor">Gestor</option><option value="administrador">Administrador</option></select></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modalUsuario')">Cancelar</button><button class="btn btn-primary" onclick="salvarUsuario()">Salvar</button></div>
+  </div>
+</div>
+
+<!-- Modal Relatório -->
+<div class="overlay" id="modalRelatorio">
+  <div class="modal modal-xl">
+    <div class="modal-header"><div class="modal-title" id="relTitle">📊 Relatório</div><button class="modal-close" onclick="closeModal('modalRelatorio')">✕</button></div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="rt-resultados" onclick="switchModalTab('modalRelatorio','rt-resultados',this)">Resultados</button>
+      <button class="tab-btn" data-tab="rt-produtividade" onclick="switchModalTab('modalRelatorio','rt-produtividade',this)">Produtividade</button>
+      <button class="tab-btn" data-tab="rt-cruzamento" onclick="switchModalTab('modalRelatorio','rt-cruzamento',this)">Cruzamento</button>
+      <button class="tab-btn" data-tab="rt-exportar" onclick="switchModalTab('modalRelatorio','rt-exportar',this)">Exportar</button>
+    </div>
+    <!-- cabeçalho visível apenas na impressão -->
+    <div id="print-header" style="display:none;margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid #333;">
+      <h2 id="printTitle" style="font-size:1.3rem;font-weight:800;margin-bottom:4px;"></h2>
+      <div id="printMeta" style="font-size:.82rem;color:#666;"></div>
+    </div>
+    <div class="tab-content active" id="rt-resultados">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+        <div id="relStats" style="display:flex;gap:14px;flex-wrap:wrap;"></div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn btn-ghost btn-sm" onclick="imprimirRelatorio()" title="Imprimir / Gerar PDF">🖨️ Imprimir / PDF</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;" id="relCidadeFiltros"></div>
+      <div id="relResultados"></div>
+    </div>
+    <div class="tab-content" id="rt-produtividade"><div id="relProdutividade"></div></div>
+    <div class="tab-content" id="rt-cruzamento">
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:12px;">Cruze duas perguntas para ver a distribuição de respostas em tabela de contingência.</p>
+      <div class="cruzamento-builder" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+        <div style="flex:1;min-width:180px;">
+          <label style="font-size:.76rem;color:var(--muted);display:block;margin-bottom:4px;">Pergunta linha (variável principal)</label>
+          <select class="select-inline" id="cruzPergLinha" style="width:100%;"></select>
+        </div>
+        <div style="flex:1;min-width:180px;">
+          <label style="font-size:.76rem;color:var(--muted);display:block;margin-bottom:4px;">Pergunta coluna (variável de cruzamento)</label>
+          <select class="select-inline" id="cruzPergColuna" style="width:100%;"></select>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="executarCruzamento()">🔀 Cruzar</button>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <span style="font-size:.76rem;color:var(--muted);">Exibir %:</span>
+        <button class="prc-type-btn active" id="cruzPctLinha" onclick="setCruzPct('linha')">% da linha</button>
+        <button class="prc-type-btn" id="cruzPctColuna" onclick="setCruzPct('coluna')">% da coluna</button>
+        <button class="prc-type-btn" id="cruzPctTotal" onclick="setCruzPct('total')">% do total</button>
+      </div>
+      <div id="cruzResultado" style="margin-top:16px;overflow-x:auto;"></div>
+    </div>
+    <div class="tab-content" id="rt-exportar">
+      <p style="font-size:.86rem;color:var(--muted);margin-bottom:20px;">Cada linha = uma entrevista. Cabeçalho = perguntas. Células = número da opção escolhida.</p>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-primary" onclick="exportarRelCSV()">⬇ Exportar CSV</button>
+        <button class="btn btn-ghost" onclick="exportarRelTXT()">⬇ Exportar TXT</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- MODAL: IMPORTAÇÃO GRANDE -->
+<div class="overlay" id="overlayImportGrande" onclick="closeModal('overlayImportGrande')">
+  <div class="modal modal-lg" onclick="event.stopPropagation()" style="max-width:700px;">
+    <div class="modal-header">
+      <div class="modal-title">📋 Importar Lista Completa de Contatos</div>
+      <button class="modal-close" onclick="closeModal('overlayImportGrande')">✕</button>
+    </div>
+    <div style="font-size:.83rem;color:var(--muted);margin-bottom:14px;">Cole ou faça upload de uma planilha/CSV com cabeçalho: <strong>Estado, Cidade, Telefone, Bairro, Endereço, CEP</strong>. A ordem das colunas deve seguir exatamente esse padrão.</div>
+    <div class="tabs" style="margin-bottom:16px;">
+      <button class="tab-btn active" onclick="switchTab('ig','ig-colar',this)">📋 Colar texto</button>
+      <button class="tab-btn" onclick="switchTab('ig','ig-upload',this)">📁 Upload CSV/Excel</button>
+    </div>
+    <div id="ig-colar">
+      <div class="form-field">
+        <label>Cole aqui (CSV com cabeçalho)</label>
+        <textarea id="igTexto" rows="10" placeholder="Estado,Cidade,Telefone,Bairro,Endereço,CEP&#10;TO,Palmas,(63)99999-0001,Plano Diretor Norte,QI 01 Lote 1,77000-000&#10;TO,Palmas,(63)99999-0002,Jardim Aureny III,Rua 05,77064-000" style="font-family:var(--mono);font-size:.8rem;resize:vertical;"></textarea>
+      </div>
+    </div>
+    <div id="ig-upload" class="hidden">
+      <div class="form-field">
+        <label>Arquivo CSV ou Excel (.csv, .xlsx, .xls)</label>
+        <input type="file" id="igFile" accept=".csv,.xlsx,.xls" onchange="igLerArquivo(this)">
+      </div>
+      <div id="igPreviewWrap" class="hidden">
+        <div style="font-size:.8rem;color:var(--muted);margin-bottom:6px;" id="igPreviewInfo"></div>
+        <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
+          <table style="font-size:.75rem;"><thead id="igPreviewHead"></thead><tbody id="igPreviewBody"></tbody></table>
+        </div>
+      </div>
+    </div>
+    <div class="form-field" style="margin-top:12px;">
+      <label>Nome da Base</label>
+      <input type="text" id="igNome" placeholder="Ex: Palmas — Lista Geral 2026">
+    </div>
+    <div class="form-row cols3">
+      <div class="form-field">
+        <label>Tipo padrão</label>
+        <select id="igTipo"><option value="celular">Celular</option><option value="fixo">Fixo</option><option value="empresa">Empresa</option></select>
+      </div>
+    </div>
+    <div id="igResumo" style="font-size:.82rem;color:var(--muted);margin:10px 0;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('overlayImportGrande')">Cancelar</button>
+      <button class="btn btn-primary" onclick="executarImportGrande()">⬆ Importar Contatos</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CRIAR BASE POR FILTRO -->
+<div class="overlay" id="overlaycriarBase" onclick="closeModal('overlaycriarBase')">
+  <div class="modal modal-lg" onclick="event.stopPropagation()" style="max-width:680px;">
+    <div class="modal-header">
+      <div class="modal-title">🗂 Criar Nova Base por Filtro</div>
+      <button class="modal-close" onclick="closeModal('overlaycriarBase')">✕</button>
+    </div>
+    <div style="font-size:.83rem;color:var(--muted);margin-bottom:16px;">Filtre os contatos já importados e gere uma nova base com os números selecionados.</div>
+    <div class="form-field">
+      <label>Nome da nova base</label>
+      <input type="text" id="cbNome" placeholder="Ex: Palmas — Setor Sul — Celular">
+    </div>
+    <div class="form-field">
+      <label>Tipo da base</label>
+      <select id="cbTipo">
+        <option value="bairro">📍 Bairro</option>
+        <option value="regiao">🗺 Região</option>
+      </select>
+    </div>
+    <div style="font-weight:600;font-size:.85rem;margin:14px 0 10px;">Filtros para seleção dos contatos:</div>
+    <div class="form-row cols2">
+      <div class="form-field">
+        <label>Estado</label>
+        <select id="cbEstado" onchange="cbFiltroEstadoChange()"><option value="">Todos</option></select>
+      </div>
+      <div class="form-field">
+        <label>Cidade</label>
+        <select id="cbCidade" onchange="cbAtualizarPreview()"><option value="">Todas</option></select>
+      </div>
+    </div>
+    <div class="form-row cols2">
+      <div class="form-field">
+        <label>Bairro</label>
+        <select id="cbBairro" onchange="cbAtualizarPreview()"><option value="">Todos</option></select>
+      </div>
+      <div class="form-field">
+        <label>Tipo de número</label>
+        <select id="cbTipoNum" onchange="cbAtualizarPreview()">
+          <option value="">Todos</option>
+          <option value="celular">Celular</option>
+          <option value="fixo">Fixo</option>
+          <option value="empresa">Empresa</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row cols2">
+      <div class="form-field">
+        <label>Texto no Endereço</label>
+        <input type="text" id="cbEndereco" placeholder="Ex: Quadra 104" oninput="cbAtualizarPreview()">
+      </div>
+      <div class="form-field">
+        <label>CEP (ou início)</label>
+        <input type="text" id="cbCep" placeholder="Ex: 77000" oninput="cbAtualizarPreview()">
+      </div>
+    </div>
+    <div class="form-field">
+      <label>Status dos números</label>
+      <select id="cbStatus" onchange="cbAtualizarPreview()">
+        <option value="disponivel">Disponível</option>
+        <option value="">Todos os status</option>
+        <option value="ocupado">Ocupado</option>
+        <option value="nao-atendeu">Não Atendeu</option>
+      </select>
+    </div>
+    <div id="cbPreview" style="background:var(--light);border-radius:9px;padding:12px 16px;font-size:.84rem;margin:12px 0;color:var(--muted);">Ajuste os filtros para ver a contagem de números selecionados.</div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('overlaycriarBase')">Cancelar</button>
+      <button class="btn btn-teal" onclick="executarCriarBase()">🗂 Criar Base</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// INDEXEDDB v5
+// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
+// API CLIENT — substitui IndexedDB
+// ══════════════════════════════════════════════════
+const API_BASE = '';  // mesmo domínio (backend serve o frontend)
+
+let _token = null;
+
+function apiToken() {
+  if (!_token) _token = sessionStorage.getItem('api_token');
+  return _token;
+}
+
+async function apiFetch(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  const token = apiToken();
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  const res = await fetch(API_BASE + path, {
+    ...opts,
+    headers: { ...headers, ...(opts.headers || {}) },
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  if (res.status === 401) { doLogout(); return null; }
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || res.statusText);
+  }
+  return res.json();
+}
+
+// Wrappers de conveniência
+const apiGet  = (path)        => apiFetch(path, { method: 'GET' });
+const apiPost = (path, body)  => apiFetch(path, { method: 'POST', body });
+const apiPut  = (path, body)  => apiFetch(path, { method: 'PUT',  body });
+const apiDel  = (path)        => apiFetch(path, { method: 'DELETE' });
+
+// ══════════════════════════════════════════════════
+// ESTADOS/CIDADES
+// ══════════════════════════════════════════════════
+const ESTADOS=[{uf:'AC',nome:'Acre'},{uf:'AL',nome:'Alagoas'},{uf:'AP',nome:'Amapá'},{uf:'AM',nome:'Amazonas'},{uf:'BA',nome:'Bahia'},{uf:'CE',nome:'Ceará'},{uf:'DF',nome:'Distrito Federal'},{uf:'ES',nome:'Espírito Santo'},{uf:'GO',nome:'Goiás'},{uf:'MA',nome:'Maranhão'},{uf:'MT',nome:'Mato Grosso'},{uf:'MS',nome:'Mato Grosso do Sul'},{uf:'MG',nome:'Minas Gerais'},{uf:'PA',nome:'Pará'},{uf:'PB',nome:'Paraíba'},{uf:'PR',nome:'Paraná'},{uf:'PE',nome:'Pernambuco'},{uf:'PI',nome:'Piauí'},{uf:'RJ',nome:'Rio de Janeiro'},{uf:'RN',nome:'Rio Grande do Norte'},{uf:'RS',nome:'Rio Grande do Sul'},{uf:'RO',nome:'Rondônia'},{uf:'RR',nome:'Roraima'},{uf:'SC',nome:'Santa Catarina'},{uf:'SP',nome:'São Paulo'},{uf:'SE',nome:'Sergipe'},{uf:'TO',nome:'Tocantins'}];
+const CIDADES={AC:['Rio Branco','Cruzeiro do Sul'],AL:['Maceió','Arapiraca','Palmeira dos Índios'],AP:['Macapá','Santana'],AM:['Manaus','Parintins','Itacoatiara','Manacapuru'],BA:['Salvador','Feira de Santana','Vitória da Conquista','Camaçari','Itabuna','Juazeiro','Lauro de Freitas'],CE:['Fortaleza','Caucaia','Juazeiro do Norte','Maracanaú','Sobral','Crato'],DF:['Brasília','Ceilândia','Taguatinga','Samambaia','Gama'],ES:['Vitória','Serra','Vila Velha','Cariacica','Linhares','Cachoeiro de Itapemirim'],GO:['Goiânia','Aparecida de Goiânia','Anápolis','Rio Verde','Luziânia'],MA:['São Luís','Imperatriz','São José de Ribamar','Timon','Caxias'],MT:['Cuiabá','Várzea Grande','Rondonópolis','Sinop'],MS:['Campo Grande','Dourados','Três Lagoas','Corumbá'],MG:['Belo Horizonte','Uberlândia','Contagem','Juiz de Fora','Betim','Montes Claros','Ribeirão das Neves','Uberaba','Ipatinga','Governador Valadares'],PA:['Belém','Ananindeua','Santarém','Marabá','Castanhal'],PB:['João Pessoa','Campina Grande','Santa Rita','Patos','Bayeux'],PR:['Curitiba','Londrina','Maringá','Ponta Grossa','Cascavel','São José dos Pinhais','Foz do Iguaçu','Colombo'],PE:['Recife','Caruaru','Olinda','Jaboatão dos Guararapes','Petrolina','Paulista'],PI:['Teresina','Parnaíba','Picos','Floriano'],RJ:['Rio de Janeiro','São Gonçalo','Duque de Caxias','Nova Iguaçu','Niterói','Belford Roxo','Campos dos Goytacazes','Petrópolis'],RN:['Natal','Mossoró','Parnamirim','São Gonçalo do Amarante'],RS:['Porto Alegre','Caxias do Sul','Canoas','Pelotas','Santa Maria','Gravataí','Viamão','Novo Hamburgo','São Leopoldo'],RO:['Porto Velho','Ji-Paraná','Ariquemes'],RR:['Boa Vista'],SC:['Florianópolis','Joinville','Blumenau','São José','Criciúma','Chapecó','Itajaí','Lages'],SP:['São Paulo','Guarulhos','Campinas','São Bernardo do Campo','Santo André','Osasco','Ribeirão Preto','Sorocaba','São José dos Campos','Santos','Mogi das Cruzes','Diadema','Jundiaí','Piracicaba','Bauru'],SE:['Aracaju','Nossa Senhora do Socorro','Lagarto','Itabaiana'],TO:['Palmas','Araguaína','Gurupi','Porto Nacional','Paraíso do Tocantins']};
+
+// ══════════════════════════════════════════════════
+// ESTADO GLOBAL
+// ══════════════════════════════════════════════════
+let currentUser=null;
+let allNumeros=[],allArquivos=[],allUsers=[],allAtividades=[],allRegioes=[],allPesquisas=[],allEntrevistas=[],allModelos=[];
+let sysConfigs={inatividade:15,acima:30,abaixo:30,minEntrev:120};
+
+// Dialer pesquisador/gestor
+let dPesquisa=null,dNumAtual=null,dFlag=null,dUsados=new Set();
+let dRespostas={},dPergAtual=0,dInicioEntrev=null;
+
+// Relatório
+let relPesquisaId=null,relChartType='pizza',relCharts={},relCidadeFiltro='todas';
+
+// Dashboard
+let dayFilter='hoje';
+
+// Tabela números
+let numFilter='todos',numPage=1;
+const PER_PAGE=20;
+
+// Edições
+let editingUserId=null,editingPesquisaId=null,editingRegiaoId=null,editingModeloId=null;
+let pesqPerguntas=[],modeloPerguntas=[];
+
+// ══════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const todayStr=()=>new Date().toISOString().slice(0,10);
+const fmtDate=ts=>new Date(ts).toLocaleDateString('pt-BR');
+const initials=n=>(n||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+function fmtTel(v){const d=String(v).replace(/\D/g,'');if(d.length===11)return`(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;if(d.length===10)return`(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;return v;}
+function fmtMs(ms){if(!ms||ms<0)return'—';const s=Math.round(ms/1000);if(s<60)return`${s}s`;const m=Math.floor(s/60),ss=s%60;return`${m}m${ss>0?ss+'s':''}`;}
+function dayLabel(s){const[y,m,d]=s.split('-');return`${d}/${m}/${y}`;}
+function toast(msg,type='success'){const wrap=document.getElementById('toastWrap');const el=document.createElement('div');el.className=`toast ${type}`;el.textContent=msg;wrap.appendChild(el);requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('show')));setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),400);},3500);}
+function tagFor(s){const m={disponivel:['tag-disponivel','Disponível'],inexistente:['tag-inexistente','Inexistente'],ocupado:['tag-ocupado','Ocupado'],'nao-atendeu':['tag-nao-atendeu','Não Atendeu'],atendeu:['tag-atendeu','Atendeu'],ativo:['tag-ativo','Ativo'],pausado:['tag-pausado','Pausado'],finalizado:['tag-finalizado','Finalizado']};const[cls,lbl]=m[s]||['tag-disponivel',s];return`<span class="tag ${cls}">${lbl}</span>`;}
+function populateEstado(sel){sel.innerHTML='<option value="">Selecione...</option>';ESTADOS.forEach(e=>sel.innerHTML+=`<option value="${e.uf}">${e.nome} (${e.uf})</option>`);}
+
+// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
+// LOGIN / LOGOUT — versão API
+// ══════════════════════════════════════════════════
+async function doLogin(){
+  const login = document.getElementById('loginUser').value.trim();
+  const senha = document.getElementById('loginPass').value.trim();
+  try {
+    const data = await apiPost('/api/auth/login', { login, senha });
+    if (!data) return;
+    _token = data.token;
+    sessionStorage.setItem('api_token', data.token);
+    sessionStorage.setItem('ct_user', JSON.stringify({ id: data.user.id }));
+    currentUser = data.user;
+    await carregarTodosDados();
+    afterLogin();
+  } catch(e) {
+    document.getElementById('loginErr').style.display = 'block';
+  }
+}
+
+function doLogout(){
+  _token = null;
+  currentUser = null;
+  sessionStorage.removeItem('api_token');
+  sessionStorage.removeItem('ct_user');
+  allUsers=[]; allNumeros=[]; allArquivos=[]; allAtividades=[];
+  allRegioes=[]; allPesquisas=[]; allEntrevistas=[]; allModelos=[];
+  dPesquisa=null; dNumAtual=null; dFlag=null; dUsados=new Set();
+  dRespostas={}; dPergAtual=0; dInicioEntrev=null;
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+  showPage('page-login');
+}
+
+async function carregarTodosDados(){
+  const [users, arquivos, numerosRes, regioes, pesquisas, entrevistas, modelos, configs] = await Promise.all([
+    apiGet('/api/users'),
+    apiGet('/api/arquivos'),
+    apiGet('/api/numeros?limit=5000'),
+    apiGet('/api/regioes'),
+    apiGet('/api/pesquisas'),
+    apiGet('/api/entrevistas'),
+    apiGet('/api/modelos'),
+    apiGet('/api/configs')
+  ]);
+  allUsers       = users        || [];
+  allArquivos    = arquivos     || [];
+  allNumeros     = (numerosRes?.data) || [];
+  allRegioes     = regioes      || [];
+  allPesquisas   = pesquisas    || [];
+  allEntrevistas = entrevistas  || [];
+  allModelos     = modelos      || [];
+
+  if (configs) {
+    sysConfigs = {
+      inatividade: configs.inatividade || 15,
+      acima: configs.acima || 30,
+      abaixo: configs.abaixo || 30,
+      abaixoMedia: configs.abaixoMedia || 30,
+      ativoInatividade: configs.ativoInatividade !== false,
+      ativoAcima: configs.ativoAcima !== false,
+      ativoAbaixo: configs.ativoAbaixo !== false,
+      ativoAbaixoMedia: configs.ativoAbaixoMedia !== false
+    };
+    if (configs.logoB64) {
+      document.querySelectorAll('.sys-logo,#loginLogoImg,#topbarLogoImg,#gestorLogoImg,#entrevLogoImg').forEach(el => { if(el) el.src = configs.logoB64; });
+    }
+  }
+}
+
+// ── Salvar configs ────────────────────────────────
+async function salvarConfigs(){
+  const inatividade = parseInt(document.getElementById('cfgInatividade').value)||15;
+  const acima       = parseInt(document.getElementById('cfgAcima').value)||30;
+  const abaixo      = parseInt(document.getElementById('cfgAbaixo').value)||30;
+  const abaixoMedia = parseInt(document.getElementById('cfgAbaixoMedia').value)||30;
+  const ativoInatividade = document.getElementById('cfgAtivoInatividade').checked;
+  const ativoAcima       = document.getElementById('cfgAtivoAcima').checked;
+  const ativoAbaixo      = document.getElementById('cfgAtivoAbaixo').checked;
+  const ativoAbaixoMedia = document.getElementById('cfgAtivoAbaixoMedia').checked;
+  sysConfigs = { inatividade, acima, abaixo, abaixoMedia, ativoInatividade, ativoAcima, ativoAbaixo, ativoAbaixoMedia };
+  try {
+    await apiPut('/api/configs', sysConfigs);
+    toast('Configurações salvas!');
+  } catch(e) { toast('Erro ao salvar: ' + e.message, 'error'); }
+}
+
+// ── Usuários ──────────────────────────────────────
+async function salvarUsuario(){
+  const nome   = document.getElementById('uNome').value.trim();
+  const login  = document.getElementById('uLogin').value.trim();
+  const senha  = document.getElementById('uSenha').value.trim();
+  const perfil = document.getElementById('uPerfil').value;
+  if(!nome||!login){toast('Preencha nome e login!','warn');return;}
+  try {
+    if(editingUserId){
+      await apiPut('/api/users/'+editingUserId, {nome,login,senha:senha||undefined,perfil});
+      const i=allUsers.findIndex(u=>u.id===editingUserId);
+      if(i>=0) allUsers[i]={...allUsers[i],nome,login,perfil};
+    } else {
+      if(!senha){toast('Informe uma senha!','warn');return;}
+      const r = await apiPost('/api/users', {nome,login,senha,perfil});
+      allUsers.push({id:r.id,nome,login,perfil});
+    }
+    closeModal('overlayUsuario');
+    renderUsuarios();
+    toast(editingUserId?'Usuário atualizado!':'Usuário criado!');
+    editingUserId=null;
+  } catch(e){ toast('Erro: '+e.message,'error'); }
+}
+
+async function deletarUsuario(id){
+  if(!confirm('Remover?'))return;
+  try {
+    await apiDel('/api/users/'+id);
+    allUsers=allUsers.filter(u=>u.id!==id);
+    renderUsuarios();
+    toast('Usuário removido.');
+  } catch(e){ toast('Erro: '+e.message,'error'); }
+}
+
+// ── Regiões ───────────────────────────────────────
+async function salvarRegiao(){
+  const nome = document.getElementById('rNome').value.trim();
+  const tipo = document.getElementById('rTipo').value;
+  const estado = document.getElementById('rEstado').value;
+  const sel = document.getElementById('rCidades');
+  const cidades = Array.from(sel.selectedOptions).map(o=>o.value);
+  if(!nome||!estado||!cidades.length){toast('Preencha todos os campos!','warn');return;}
+  const id = editingRegiaoId || uid();
+  try {
+    await apiPost('/api/regioes', {id,nome,tipo,estado,cidades});
+    const item={id,nome,tipo,estado,cidades};
+    if(!editingRegiaoId) allRegioes.push(item);
+    else { const i=allRegioes.findIndex(r=>r.id===id); allRegioes[i]=item; }
+    closeModal('overlayRegiao');
+    renderRegioes();
+    toast(editingRegiaoId?'Região atualizada!':'Região criada!');
+    editingRegiaoId=null;
+  } catch(e){ toast('Erro: '+e.message,'error'); }
+}
+
+async function deletarRegiao(id){
+  if(!confirm('Remover?'))return;
+  try {
+    await apiDel('/api/regioes/'+id);
+    allRegioes=allRegioes.filter(r=>r.id!==id);
+    renderRegioes();
+    toast('Região removida.');
+  } catch(e){ toast('Erro: '+e.message,'error'); }
+}
+
+// ── Modelos ───────────────────────────────────────
+async function salvarModelo(){
+  const nome = document.getElementById('modeloNome').value.trim();
+  if(!nome){toast('Informe o nome!','warn');return;}
+  const id = editingModeloId || uid();
+  try {
+    await apiPost('/api/modelos', {id,nome,perguntas:modeloPerguntas});
+    const item={id,nome,perguntas:modeloPerguntas};
+    if(!editingModeloId) allModelos.push(item);
+    else { const i=allModelos.findIndex(m=>m.id===id); allModelos[i]=item; }
+    closeModal('overlayModelo');
+    renderModelos();
+    toast(editingModeloId?'Modelo atualizado!':'Modelo criado!');
+    editingModeloId=null;
+  } catch(e){ toast('Erro: '+e.message,'error'); }
+}
+
+async function deletarModelo(id){
+  if(!confirm('Remover?'))return;
+  try {
+    await apiDel('/api/modelos/'+id);
+    allModelos=allModelos.filter(m=>m.id!==id);
+    renderModelos();
+    toast('Modelo removido.');
+  } catch(e){ toast('Erro: '+e.message,'error'); }
+}
+
+// ── Pesquisas ─────────────────────────────────────
+async function salvarPesquisa(){
+  const nome   = document.getElementById('pNome').value.trim();
+  const estado = document.getElementById('pEstado').value;
+  const locVal = document.getElementById('pLocal').value;
+  const meta   = parseInt(document.getElementById('pMeta').value)||100;
+  const status = document.getElementById('pStatus').value;
+  const tipoNum= document.getElementById('pTipoNum').value||null;
+  const modalidade = document.getElementById('pModalidade')?.value||'telefone';
+  const pesquisadores = Array.from(document.querySelectorAll('#pPesqList input:checked')).map(c=>c.value);
+  if(!nome||!estado){toast('Preencha nome e estado!','warn');return;}
+  let cidade=null,regiaoId=null;
+  if(locVal.startsWith('regiao:')){regiaoId=locVal.replace('regiao:','');}else{cidade=locVal||null;}
+  const id = editingPesquisaId || uid();
+  try {
+    await apiPost('/api/pesquisas', {id,nome,estado,cidade,regiaoId,meta,status,tipoNum,modalidade,perguntas:pesqPerguntas,pesquisadores});
+    const item={id,nome,estado,cidade,regiaoId,meta,status,tipoNum,modalidade,perguntas:pesqPerguntas,pesquisadores};
+    if(!editingPesquisaId) allPesquisas.push(item);
+    else { const i=allPesquisas.findIndex(p=>p.id===id); allPesquisas[i]=item; }
+    closeModal('overlayPesquisa');
+    renderPesquisas();
+    toast(editingPesquisaId?'Pesquisa atualizada!':'Pesquisa criada!');
+    editingPesquisaId=null;
+  } catch(e){ toast('Erro: '+e.message,'error'); }
+}
+
+async function deletarPesquisa(id){
+  if(!confirm('Remover esta pesquisa e todas as entrevistas?'))return;
+  try {
+    await apiDel('/api/pesquisas/'+id);
+    allPesquisas=allPesquisas.filter(p=>p.id!==id);
+    allEntrevistas=allEntrevistas.filter(e=>e.pesquisaId!==id);
+    renderPesquisas();
+    toast('Pesquisa removida.');
+  } catch(e){ toast('Erro: '+e.message,'error'); }
+}
+
+// ── Importar CSV / Números ────────────────────────
+async function importarCSV(){
+  const nomeArq = document.getElementById('csvNome').value.trim();
+  const estado  = document.getElementById('csvEstado').value;
+  const cidade  = document.getElementById('csvCidade').value;
+  const tipo    = document.getElementById('csvTipo').value;
+  const raw     = document.getElementById('csvTexto').value.trim();
+  if(!nomeArq||!estado||!raw){toast('Preencha todos os campos!','warn');return;}
+  const csvLines = [...new Set(raw.split(/[\n,;]+/).map(l=>l.replace(/\D/g,'')).filter(l=>l.length>=8&&l.length<=11))];
+  if(!csvLines.length){toast('Nenhum número válido encontrado!','warn');return;}
+  const arquivoId = uid();
+  const arq = {id:arquivoId,nome:nomeArq,tipo,estado,cidade,dataImport:new Date().toLocaleDateString('pt-BR'),totalImportado:csvLines.length};
+  try {
+    await apiPost('/api/arquivos', arq);
+    const numeros = csvLines.map(tel => ({telefone:tel,cidade}));
+    const r = await apiPost('/api/numeros/bulk', {arquivoId,estado,cidade,tipo,numeros});
+    allArquivos.push({...arq, totalAtual: r.inseridos});
+    closeModal('overlayImport');
+    renderArquivos();
+    toast(`✅ ${r.inseridos} números importados!`);
+  } catch(e){ toast('Erro: '+e.message,'error'); }
+}
+
+async function deletarArquivo(id){
+  if(!confirm('Remover arquivo e todos os números?'))return;
+  try {
+    await apiDel('/api/numeros/arquivo/'+id);
+    allArquivos=allArquivos.filter(a=>a.id!==id);
+    allNumeros=allNumeros.filter(n=>n.arquivoId!==id);
+    renderArquivos();
+    toast('Arquivo removido.');
+  } catch(e){ toast('Erro: '+e.message,'error'); }
+}
+
+async function resetarArquivo(id){
+  try {
+    await apiPut('/api/numeros/arquivo/'+id+'/resetar', {});
+    allNumeros.filter(n=>n.arquivoId===id&&['atendeu','ocupado','nao-atendeu'].includes(n.status)).forEach(n=>n.status='disponivel');
+    renderArquivos();
+    toast('Status resetados!');
+  } catch(e){ toast('Erro: '+e.message,'error'); }
+}
+
+// ── Flag / Atividade ──────────────────────────────
+async function salvarFlag(numId, status, user, duracao=null){
+  try {
+    await apiPut('/api/numeros/'+numId+'/status', {status});
+    if(status==='inexistente'){allNumeros=allNumeros.filter(n=>n.id!==numId);}
+    else{const num=allNumeros.find(n=>n.id===numId);if(num)num.status=status;}
+    const atv={id:uid(),pesquisaId:dPesquisa?.id,numId,status,duracao,dia:todayStr(),ts:Date.now()};
+    await apiPost('/api/atividades', atv);
+    allAtividades.push({...atv,userId:user.id,userName:user.nome});
+  } catch(e){ console.error('salvarFlag:', e.message); }
+}
+
+// ── Finalizar Entrevista ──────────────────────────
+async function finalizarEntrevista(){
+  if(!dNumAtual||!dPesquisa)return;
+  const perguntas=dPesquisa.perguntas||[];
+  const todasRespondidas=perguntas.every(p=>(dRespostas[p.id]||[]).length>0);
+  if(!todasRespondidas){toast('Responda todas as perguntas antes de finalizar!','warn');return;}
+  const agora=Date.now(),duracao=dInicioEntrev?agora-dInicioEntrev:null;
+  const entrev={id:uid(),pesquisaId:dPesquisa.id,userId:currentUser.id,userName:currentUser.nome,
+    respostas:JSON.parse(JSON.stringify(dRespostas)),duracao,cidade:dNumAtual?.cidade,
+    dia:todayStr(),ts:agora};
+  try {
+    await apiPost('/api/entrevistas', entrev);
+    allEntrevistas.push(entrev);
+    await salvarFlag(dNumAtual.id,'atendeu',currentUser,duracao);
+    toast('✅ Entrevista finalizada!');
+    dNumAtual=null;dFlag=null;dRespostas={};dPergAtual=0;dInicioEntrev=null;
+    renderMinimap();
+    await novoNumero();
+  } catch(e){ toast('Erro ao finalizar: '+e.message,'error'); }
+}
+
+// ── Logo Upload ───────────────────────────────────
+async function uploadLogo(file){
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const b64 = e.target.result;
+    try {
+      await apiPut('/api/configs', { logoB64: b64 });
+      document.querySelectorAll('.sys-logo,#loginLogoImg,#topbarLogoImg,#gestorLogoImg,#entrevLogoImg').forEach(el=>{if(el)el.src=b64;});
+      toast('Logo atualizado!');
+    } catch(err){ toast('Erro ao salvar logo','error'); }
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Init ──────────────────────────────────────────
+async function init(){
+  const token = sessionStorage.getItem('api_token');
+  const saved = sessionStorage.getItem('ct_user');
+  if(token && saved){
+    _token = token;
+    try {
+      await carregarTodosDados();
+      const s = JSON.parse(saved);
+      currentUser = allUsers.find(u=>u.id===s.id);
+      if(currentUser){
+        document.getElementById('cfgInatividade').value=sysConfigs.inatividade;
+        document.getElementById('cfgAcima').value=sysConfigs.acima;
+        document.getElementById('cfgAbaixo').value=sysConfigs.abaixo;
+        document.getElementById('cfgAbaixoMedia').value=sysConfigs.abaixoMedia||30;
+        document.getElementById('cfgAtivoInatividade').checked=sysConfigs.ativoInatividade!==false;
+        document.getElementById('cfgAtivoAcima').checked=sysConfigs.ativoAcima!==false;
+        document.getElementById('cfgAtivoAbaixo').checked=sysConfigs.ativoAbaixo!==false;
+        document.getElementById('cfgAtivoAbaixoMedia').checked=sysConfigs.ativoAbaixoMedia!==false;
+        afterLogin();
+      }
+    } catch(e){ sessionStorage.clear(); }
+  }
+}
+init();
+</script>
+</body>
+</html>
