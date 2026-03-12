@@ -2,15 +2,10 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copia dependências primeiro (cache de layers)
-COPY backend/package*.json ./backend/
-RUN cd backend && npm install --production
+COPY package*.json ./
+RUN npm install --production
 
-# Copia o restante
-COPY backend/ ./backend/
-COPY frontend/ ./frontend/
-
-WORKDIR /app/backend
+COPY . .
 
 EXPOSE 3000
 
