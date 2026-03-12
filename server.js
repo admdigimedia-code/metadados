@@ -49,7 +49,7 @@ app.use('/api',             misc);  // arquivos, regioes, modelos, atividades, c
 app.get('/health', (req, res) => res.json({ status: 'ok', ts: Date.now() }));
 
 // ── Frontend estático ────────────────────────────────────
-const frontendPath = path.join(__dirname, '..', 'frontend');
+const frontendPath = path.join(__dirname, 'frontend');
 app.use(express.static(frontendPath));
 app.get('*', (req, res) => {
   res.sendFile(path.join(frontendPath, 'index.html'));
@@ -59,13 +59,14 @@ app.get('*', (req, res) => {
 async function start() {
   try {
     await initDB();
-    app.listen(PORT, '0.0.0.0', () => {
+    const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Metadados API rodando na porta ${PORT}`);
     });
+    server.keepAliveTimeout = 65000;
+    server.headersTimeout = 66000;
   } catch (err) {
     console.error('❌ Falha ao iniciar:', err.message);
     process.exit(1);
   }
 }
-
 start();
