@@ -10,13 +10,12 @@ const { initDB } = require('./db');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ── Segurança e performance ──────────────────────────────
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(compression());
 
-// ── CORS ────────────────────────────────────────────────
 const allowedOrigins = [
   'https://institutometadados.com.br',
+  'https://app.institutometadados.com.br',
   'https://www.institutometadados.com.br',
   'http://localhost:3000',
   'http://localhost:8080'
@@ -29,31 +28,25 @@ app.use(cors({
   credentials: true
 }));
 
-// ── Rate limiting ────────────────────────────────────────
 app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, max: 20, message: { error: 'Muitas tentativas. Tente em 15 minutos.' } }));
 app.use('/api', rateLimit({ windowMs: 60 * 1000, max: 300 }));
 
-// ── Body parser ──────────────────────────────────────────
-app.use(express.json({ limit: '50mb' })); // 50mb para importações grandes
+app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// ── Rotas da API ─────────────────────────────────────────
 const misc = require('./routes/misc');
 app.use('/api/auth',        require('./routes/auth'));
 app.use('/api/users',       require('./routes/users'));
 app.use('/api/pesquisas',   require('./routes/pesquisas'));
 app.use('/api/entrevistas', require('./routes/entrevistas'));
 app.use('/api/numeros',     require('./routes/numeros'));
-app.use('/api',             misc);  // arquivos, regioes, modelos, atividades, configs
+app.use('/api',             misc);
 
-// ── Health check ─────────────────────────────────────────
 app.get('/health', (req, res) => res.json({ status: 'ok', ts: Date.now() }));
 
-// ── Frontend estático ────────────────────────────────────
-const frontendPath = path.join(__dirname, '..', 'frontend');
+const frontendPath = path.join(__dirname, 'frontend');
 app.use(express.static(frontendPath));
 
-// Rota /sistema → serve o app (SPA)
 app.get('/sistema', (req, res) => {
   res.sendFile(path.join(frontendPath, 'sistema', 'index.html'));
 });
@@ -61,12 +54,10 @@ app.get('/sistema/*', (req, res) => {
   res.sendFile(path.join(frontendPath, 'sistema', 'index.html'));
 });
 
-// Página de apresentação como fallback
 app.get('*', (req, res) => {
   res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
-// ── Start ────────────────────────────────────────────────
 async function start() {
   try {
     await initDB();
