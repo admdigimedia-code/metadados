@@ -44,11 +44,7 @@ app.use('/api',             misc);
 
 app.get('/health', (req, res) => res.json({ status: 'ok', ts: Date.now() }));
 
-<<<<<<< HEAD
 const frontendPath = path.join('/app', 'frontend');
-=======
-const frontendPath = path.join(__dirname, 'frontend');
->>>>>>> 7e3d2d45d478e28d8b214c547d8788707762562b
 app.use(express.static(frontendPath));
 
 app.get('/sistema', (req, res) => {
