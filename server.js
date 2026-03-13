@@ -8,6 +8,7 @@ const path = require('path');
 const { initDB } = require('./db');
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 
 // ── Segurança e performance ──────────────────────────────
@@ -18,6 +19,7 @@ app.use(compression());
 const allowedOrigins = [
   'https://institutometadados.com.br',
   'https://www.institutometadados.com.br',
+  'https://app.institutometadados.com.br',
   'http://localhost:3000',
   'http://localhost:8080'
 ];
