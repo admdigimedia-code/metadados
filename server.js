@@ -17,6 +17,7 @@ app.use(compression());
 const allowedOrigins = [
   'https://institutometadados.com.br',
   'https://www.institutometadados.com.br',
+  'https://app.institutometadados.com.br',
   'http://localhost:3000',
   'http://localhost:8080'
 ];
