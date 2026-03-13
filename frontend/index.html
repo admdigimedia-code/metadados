@@ -1055,6 +1055,28 @@ tr:hover td{background:var(--gray-light);}
 // ══════════════════════════════════════════════════
 // INDEXEDDB v5
 // ══════════════════════════════════════════════════
+// API CLIENT
+let _token=null;
+function apiToken(){if(!_token)_token=sessionStorage.getItem('api_token');return _token;}
+async function apiFetch(path,opts={}){
+  const headers={'Content-Type':'application/json'};
+  const token=apiToken();
+  if(token)headers['Authorization']='Bearer '+token;
+  const res=await fetch(path,{...opts,headers:{...headers,...(opts.headers||{})},body:opts.body?JSON.stringify(opts.body):undefined});
+  if(res.status===401){doLogout();return null;}
+  if(!res.ok){const err=await res.json().catch(()=>({error:res.statusText}));throw new Error(err.error||res.statusText);}
+  return res.json();
+}
+const apiGet=(path)=>apiFetch(path,{method:'GET'});
+const apiPost=(path,body)=>apiFetch(path,{method:'POST',body});
+const apiPut=(path,body)=>apiFetch(path,{method:'PUT',body});
+const apiDel=(path)=>apiFetch(path,{method:'DELETE'});
+
+// ══════════════════════════════════════════════════
+// ESTADOS/CIDADES
+// ══════════════════════════════════════════════════
+const ESTADOS=[{uf:'AC',nome:'Acre'},{uf:'AL',nome:'Alagoas'},{uf:'AP',nome:'Amapá'},{uf:'AM',nome:'Amazonas'},{uf:'BA',nome:'Bahia'},{uf:'CE',nome:'Ceará'},{uf:'DF',nome:'Distrito Federal'},{uf:'ES',nome:'Espírito Santo'},{uf:'GO',nome:'Goiás'},{uf:'MA',nome:'Maranhão'},{uf:'MT',nome:'Mato Grosso'},{uf:'MS',nome:'Mato Grosso do Sul'},{uf:'MG',nome:'Minas Gerais'},{uf:'PA',nome:'Pará'},{uf:'PB',nome:'Paraíba'},{uf:'PR',nome:'Paraná'},{uf:'PE',nome:'Pernambuco'},{uf:'PI',nome:'Piauí'},{uf:'RJ',nome:'Rio de Janeiro'},{uf:'RN',nome:'Rio Grande do Norte'},{uf:'RS',nome:'Rio Grande do Sul'},{uf:'RO',nome:'Rondônia'},{uf:'RR',nome:'Roraima'},{uf:'SC',nome:'Santa Catarina'},{uf:'SP',nome:'São Paulo'},{uf:'SE',nome:'Sergipe'},{uf:'TO',nome:'Tocantins'}];
+const CIDADES={AC:['Rio Branco','Cruzeiro do Sul'],AL:['Maceió','Arapiraca','Palmeira dos Índios'],AP:['Macapá','Santana'],AM:['Manaus','Parintins','Itacoatiara','Manacapuru'],BA:['Salvador','Feira de Santana','Vitória da Conquista','Camaçari','Itabuna','Juazeiro','Lauro de Freitas'],CE:['Fortaleza','Caucaia','Juazeiro do Norte','Maracanaú','Sobral','Crato'],DF:['Brasília','Ceilândia','Taguatinga','Samambaia','Gama'],ES:['Vitória','Serra','Vila Velha','Cariacica','Linhares','Cachoeiro de Itapemirim'],GO:['Goiânia','Aparecida de Goiânia','Anápolis','Rio Verde','Luziânia'],MA:['São Luís','Imperatriz','São José de Ribamar','Timon','Caxias'],MT:['Cuiabá','Várzea Grande','Rondonópolis','Sinop'],MS:['Campo Grande','Dourados','Três Lagoas','Corumbá'],MG:['Belo Horizonte','Uberlândia','Contagem','Juiz de Fora','Betim','Montes Claros','Ribeirão das Neves','Uberaba','Ipatinga','Governador Valadares'],PA:['Belém','Ananindeua','Santarém','Marabá','Castanhal'],PB:['João Pessoa','Campina Grande','Santa Rita','Patos','Bayeux'],PR:['Curitiba','Londrina','Maringá','Ponta Grossa','Cascavel','São José dos Pinhais','Foz do Iguaçu','Colombo'],PE:['Recife','Caruaru','Olinda','Jaboatão dos Guararapes','Petrolina','Paulista'],PI:['Teresina','Parnaíba','Picos','Floriano'],RJ:['Rio de Janeiro','São Gonçalo','Duque de Caxias','Nova Iguaçu','Niterói','Belford Roxo','Campos dos Goytacazes','Petrópolis'],RN:['Natal','Mossoró','Parnamirim','São Gonçalo do Amarante'],RS:['Porto Alegre','Caxias do Sul','Canoas','Pelotas','Santa Maria','Gravataí','Viamão','Novo Hamburgo','São Leopoldo'],RO:['Porto Velho','Ji-Paraná','Ariquemes'],RR:['Boa Vista'],SC:['Florianópolis','Joinville','Blumenau','São José','Criciúma','Chapecó','Itajaí','Lages'],SP:['São Paulo','Guarulhos','Campinas','São Bernardo do Campo','Santo André','Osasco','Ribeirão Preto','Sorocaba','São José dos Campos','Santos','Mogi das Cruzes','Diadema','Jundiaí','Piracicaba','Bauru'],SE:['Aracaju','Nossa Senhora do Socorro','Lagarto','Itabaiana'],TO:['Palmas','Araguaína','Gurupi','Porto Nacional','Paraíso do Tocantins']};
 
 // ══════════════════════════════════════════════════
 // ESTADO GLOBAL
@@ -1095,6 +1117,38 @@ function toast(msg,type='success'){const wrap=document.getElementById('toastWrap
 function tagFor(s){const m={disponivel:['tag-disponivel','Disponível'],inexistente:['tag-inexistente','Inexistente'],ocupado:['tag-ocupado','Ocupado'],'nao-atendeu':['tag-nao-atendeu','Não Atendeu'],atendeu:['tag-atendeu','Atendeu'],ativo:['tag-ativo','Ativo'],pausado:['tag-pausado','Pausado'],finalizado:['tag-finalizado','Finalizado']};const[cls,lbl]=m[s]||['tag-disponivel',s];return`<span class="tag ${cls}">${lbl}</span>`;}
 function populateEstado(sel){sel.innerHTML='<option value="">Selecione...</option>';ESTADOS.forEach(e=>sel.innerHTML+=`<option value="${e.uf}">${e.nome} (${e.uf})</option>`);}
 
+// ══════════════════════════════════════════════════
+// LOGIN / LOGOUT
+// ══════════════════════════════════════════════════
+async function doLogin(){
+  const login=document.getElementById('loginUser').value.trim();
+  const senha=document.getElementById('loginPass').value.trim();
+  try{
+    const data=await apiPost('/api/auth/login',{login,senha});
+    if(!data)return;
+    _token=data.token;
+    sessionStorage.setItem('api_token',data.token);
+    sessionStorage.setItem('ct_user',JSON.stringify({id:data.user.id}));
+    currentUser=data.user;
+    await carregarTodosDados();
+    afterLogin();
+  }catch(e){document.getElementById('loginErr').style.display='block';}
+}
+async function carregarTodosDados(){
+  const [users,arquivos,numerosRes,regioes,pesquisas,entrevistas,modelos,configs]=await Promise.all([
+    apiGet('/api/users'),apiGet('/api/arquivos'),apiGet('/api/numeros?limit=5000'),
+    apiGet('/api/regioes'),apiGet('/api/pesquisas'),apiGet('/api/entrevistas'),
+    apiGet('/api/modelos'),apiGet('/api/configs')
+  ]);
+  allUsers=users||[];allArquivos=arquivos||[];allNumeros=(numerosRes?.data)||[];
+  allRegioes=regioes||[];allPesquisas=pesquisas||[];allEntrevistas=entrevistas||[];allModelos=modelos||[];
+  if(configs){
+    sysConfigs={inatividade:configs.inatividade||15,acima:configs.acima||30,abaixo:configs.abaixo||30,
+      abaixoMedia:configs.abaixo_media||30,ativoInatividade:configs.ativo_inatividade!==false,
+      ativoAcima:configs.ativo_acima!==false,ativoAbaixo:configs.ativo_abaixo!==false,ativoAbaixoMedia:configs.ativo_abaixo_media!==false};
+    if(configs.logo_b64)document.querySelectorAll('.sys-logo,#loginLogoImg,#topbarLogoImg,#gestorLogoImg,#entrevLogoImg').forEach(el=>{if(el)el.src=configs.logo_b64;});
+  }
+}
 function afterLogin(){
   const u=currentUser;
   if(u.perfil==='administrador'){
@@ -1118,6 +1172,13 @@ function afterLogin(){
     initPesquisador();
   }
 }
+function doLogout(){
+  currentUser=null;sessionStorage.removeItem('ct_user');
+  dPesquisa=null;dNumAtual=null;dFlag=null;dUsados=new Set();dRespostas={};dPergAtual=0;dInicioEntrev=null;
+  document.getElementById('loginUser').value='';document.getElementById('loginPass').value='';
+  showPage('page-login');
+}
+
 // ══════════════════════════════════════════════════
 // NAVIGATION
 // ══════════════════════════════════════════════════
@@ -1254,15 +1315,22 @@ function addModeloPergunta(){modeloPerguntas.push({id:uid(),texto:'',tipo:'unica
 async function salvarModelo(){
   const nome=document.getElementById('mmoNome').value.trim();
   if(!nome){toast('Informe o nome do modelo!','warn');return;}
-  const item={id:editingModeloId||uid(),nome,desc:document.getElementById('mmoDesc').value.trim(),perguntas:JSON.parse(JSON.stringify(modeloPerguntas))};
-  await dbPut('modelos',item);
-  if(!editingModeloId)allModelos.push(item);else{const i=allModelos.findIndex(x=>x.id===item.id);allModelos[i]=item;}
-  closeModal('modalModelo');renderModelos();popularModeloSelect();toast('Modelo salvo!');
+  const desc=document.getElementById('mmoDesc')?.value.trim()||'';
+  const id=editingModeloId||uid();
+  try{
+    await apiPost('/api/modelos',{id,nome,desc,perguntas:modeloPerguntas});
+    const item={id,nome,desc,perguntas:JSON.parse(JSON.stringify(modeloPerguntas))};
+    if(!editingModeloId)allModelos.push(item);else{const i=allModelos.findIndex(m=>m.id===id);allModelos[i]=item;}
+    closeModal('modalModelo');renderModelos();popularModeloSelect();toast('Modelo salvo!');editingModeloId=null;
+  }catch(e){toast('Erro: '+e.message,'error');}
 }
 
 async function deletarModelo(id){
   if(!confirm('Remover modelo?'))return;
-  await dbDel('modelos',id);allModelos=allModelos.filter(m=>m.id!==id);renderModelos();popularModeloSelect();toast('Modelo removido.');
+  try{
+    await apiDel('/api/modelos/'+id);
+    allModelos=allModelos.filter(m=>m.id!==id);renderModelos();popularModeloSelect();toast('Modelo removido.');
+  }catch(e){toast('Erro: '+e.message,'error');}
 }
 
 function popularModeloSelect(){
@@ -1301,12 +1369,21 @@ async function salvarRegiao(){
   const nome=document.getElementById('rNome').value.trim(),tipo=document.getElementById('rTipo').value,estado=document.getElementById('rEstado').value;
   const cids=Array.from(document.getElementById('rCidades').selectedOptions).map(o=>o.value);
   if(!nome||!estado||cids.length===0){toast('Preencha todos os campos!','warn');return;}
-  const item={id:editingRegiaoId||uid(),nome,tipo,estado,cidades:cids};
-  await dbPut('regioes',item);
-  if(!editingRegiaoId)allRegioes.push(item);else{const i=allRegioes.findIndex(x=>x.id===item.id);allRegioes[i]=item;}
-  closeModal('modalRegiao');renderRegioes();carregarFiltrosEstadosPesq();toast('Região salva!');
+  const id=editingRegiaoId||uid();
+  try{
+    await apiPost('/api/regioes',{id,nome,tipo,estado,cidades:cids});
+    const item={id,nome,tipo,estado,cidades:cids};
+    if(!editingRegiaoId)allRegioes.push(item);else{const i=allRegioes.findIndex(r=>r.id===id);allRegioes[i]=item;}
+    closeModal('modalRegiao');renderRegioes();carregarFiltrosEstadosPesq();toast('Região salva!');editingRegiaoId=null;
+  }catch(e){toast('Erro: '+e.message,'error');}
 }
-async function deletarRegiao(id){if(!confirm('Remover?'))return;await dbDel('regioes',id);allRegioes=allRegioes.filter(r=>r.id!==id);renderRegioes();toast('Região removida.');}
+async function deletarRegiao(id){
+  if(!confirm('Remover?'))return;
+  try{
+    await apiDel('/api/regioes/'+id);
+    allRegioes=allRegioes.filter(r=>r.id!==id);renderRegioes();toast('Região removida.');
+  }catch(e){toast('Erro: '+e.message,'error');}
+}
 
 // ══════════════════════════════════════════════════
 // PESQUISAS — FILTROS
@@ -1452,26 +1529,29 @@ function renderPesqUsersList(selected=[]){
 
 async function salvarPesquisa(){
   const nome=document.getElementById('pNome').value.trim(),data=document.getElementById('pData').value;
-  const meta=parseInt(document.getElementById('pMeta').value),tipoNum=document.getElementById('pTipoNum').value;
-  const estado=document.getElementById('pEstado').value,localidade=document.getElementById('pLocalidade').value;
+  const meta=parseInt(document.getElementById('pMeta').value),tipoNum=document.getElementById('pTipoNum')?.value||null;
+  const estado=document.getElementById('pEstado').value,localidade=document.getElementById('pLocal')?.value||document.getElementById('pLocalidade')?.value||'';
   const status=document.getElementById('pStatus').value;
   const modalidade=document.querySelector('input[name=pModalidade]:checked')?.value||'telefone';
   if(!nome||!estado||!localidade||!meta){toast('Preencha nome, estado, localidade e meta!','warn');return;}
-  const pesquisadoresSel=Array.from(document.querySelectorAll('#pesqUsersList input[type=checkbox]:checked')).map(c=>c.value);
+  const pesquisadoresSel=Array.from(document.querySelectorAll('#pesqUsersList input:checked')).map(c=>c.value);
   let cidade='',regiaoId='';
   if(localidade.startsWith('regiao:'))regiaoId=localidade.replace('regiao:','');else cidade=localidade;
-  const item={id:editingPesquisaId||uid(),nome,data,meta,tipoNum,estado,cidade,regiaoId,status,modalidade,perguntas:JSON.parse(JSON.stringify(pesqPerguntas)),pesquisadores:pesquisadoresSel};
-  await dbPut('pesquisas',item);
-  if(!editingPesquisaId)allPesquisas.push(item);else{const i=allPesquisas.findIndex(x=>x.id===item.id);allPesquisas[i]=item;}
-  closeModal('modalPesquisa');renderPesquisas();toast('Pesquisa salva!');
+  const id=editingPesquisaId||uid();
+  const item={id,nome,data,meta,tipoNum,estado,cidade,regiaoId,status,modalidade,perguntas:pesqPerguntas,pesquisadores:pesquisadoresSel};
+  try{
+    await apiPost('/api/pesquisas',item);
+    if(!editingPesquisaId)allPesquisas.push(item);else{const i=allPesquisas.findIndex(p=>p.id===id);allPesquisas[i]=item;}
+    closeModal('modalPesquisa');renderPesquisas();toast('Pesquisa salva!');editingPesquisaId=null;
+  }catch(e){toast('Erro: '+e.message,'error');}
 }
 async function deletarPesquisa(id){
   if(!confirm('Excluir pesquisa e todas as entrevistas?'))return;
-  await dbDel('pesquisas',id);allPesquisas=allPesquisas.filter(p=>p.id!==id);
-  const rem=allEntrevistas.filter(e=>e.pesquisaId===id);
-  for(const e of rem)await dbDel('entrevistas',e.id);
-  allEntrevistas=allEntrevistas.filter(e=>e.pesquisaId!==id);
-  renderPesquisas();toast('Pesquisa excluída.');
+  try{
+    await apiDel('/api/pesquisas/'+id);
+    allPesquisas=allPesquisas.filter(p=>p.id!==id);allEntrevistas=allEntrevistas.filter(e=>e.pesquisaId!==id);
+    renderPesquisas();toast('Pesquisa excluída.');
+  }catch(e){toast('Erro: '+e.message,'error');}
 }
 
 // ══════════════════════════════════════════════════
@@ -1513,23 +1593,32 @@ async function importarCSV(){
   const nomeArq=document.getElementById('csvFileInput').files[0]?.name||'importação';
   if(!estado||!cidade){toast('Selecione estado e cidade!','warn');return;}
   if(csvLines.length===0){toast('Nenhum número encontrado!','warn');return;}
-  const arquivoId=uid();const jaExist=new Set(allNumeros.map(n=>n.telefone));let novos=0;
-  for(const tel of csvLines){if(jaExist.has(tel))continue;const item={id:arquivoId+'_'+tel,arquivoId,telefone:tel,estado,cidade,estadoCidade:`${estado}__${cidade}`,tipo,status:'disponivel',data:Date.now()};await dbPut('numeros',item);allNumeros.push(item);novos++;}
-  const arq={id:arquivoId,estado,cidade,tipo,nomeArquivo:nomeArq,data:Date.now(),total:csvLines.length};
-  await dbPut('arquivos',arq);allArquivos.push(arq);
-  closeModal('modalArquivo');renderArquivos();renderDashboard();toast(`✅ ${novos} números importados!`);csvLines=[];document.getElementById('csvFileInput').value='';
+  const arquivoId=uid();
+  const telExistentes=new Set(allNumeros.map(n=>n.telefone.replace(/\D/g,'')));
+  const novos=csvLines.filter(tel=>!telExistentes.has(tel.replace(/\D/g,'')));
+  const arq={id:arquivoId,nome:nomeArq,tipo,estado,cidade,dataImport:new Date().toLocaleDateString('pt-BR'),totalImportado:novos.length};
+  try{
+    await apiPost('/api/arquivos',arq);
+    if(novos.length>0){const r=await apiPost('/api/numeros/bulk',{arquivoId,estado,cidade,tipo,numeros:novos.map(tel=>({telefone:tel,cidade}))});arq.totalImportado=r.inseridos||novos.length;}
+    allArquivos.push(arq);closeModal('modalArquivo');renderArquivos();renderDashboard();
+    toast(`✅ ${arq.totalImportado} números importados!`);csvLines=[];document.getElementById('csvFileInput').value='';
+  }catch(e){toast('Erro: '+e.message,'error');}
 }
 async function deletarArquivo(id){
   if(!confirm('Remover arquivo e números?'))return;
-  await dbDel('arquivos',id);allArquivos=allArquivos.filter(a=>a.id!==id);
-  const rem=allNumeros.filter(n=>n.arquivoId===id);for(const n of rem)await dbDel('numeros',n.id);allNumeros=allNumeros.filter(n=>n.arquivoId!==id);
-  renderArquivos();renderDashboard();toast('Arquivo removido.');
+  try{
+    await apiDel('/api/numeros/arquivo/'+id);
+    allArquivos=allArquivos.filter(a=>a.id!==id);allNumeros=allNumeros.filter(n=>n.arquivoId!==id);
+    renderArquivos();renderDashboard();toast('Arquivo removido.');
+  }catch(e){toast('Erro: '+e.message,'error');}
 }
 async function resetBase(id){
   if(!confirm('Resetar? Atendeu, Ocupado e Não Atendeu voltam para Disponível.'))return;
-  const nums=allNumeros.filter(n=>n.arquivoId===id&&['atendeu','ocupado','nao-atendeu'].includes(n.status));
-  for(const n of nums){n.status='disponivel';await dbPut('numeros',n);}
-  renderArquivos();renderDashboard();toast(`🔄 ${nums.length} números resetados!`);
+  try{
+    await apiPut('/api/numeros/arquivo/'+id+'/resetar',{});
+    const nums=allNumeros.filter(n=>n.arquivoId===id&&['atendeu','ocupado','nao-atendeu'].includes(n.status));
+    nums.forEach(n=>n.status='disponivel');renderArquivos();renderDashboard();toast(`🔄 ${nums.length} números resetados!`);
+  }catch(e){toast('Erro: '+e.message,'error');}
 }
 
 // ══════════════════════════════════════════════════
@@ -1622,13 +1711,26 @@ function openUserModal(id){
   openModal('modalUsuario');
 }
 async function salvarUsuario(){
-  const nome=document.getElementById('uNome').value.trim(),login=document.getElementById('uLogin').value.trim(),senha=document.getElementById('uSenha').value.trim(),perfil=document.getElementById('uPerfil').value;
+  const nome=document.getElementById('uNome').value.trim(),login=document.getElementById('uLogin').value.trim();
+  const senha=document.getElementById('uSenha').value.trim(),perfil=document.getElementById('uPerfil').value;
   if(!nome||!login){toast('Preencha nome e login!','warn');return;}
-  if(editingUserId){const u=allUsers.find(x=>x.id===editingUserId);u.nome=nome;u.login=login;if(senha)u.senha=senha;u.perfil=perfil;await dbPut('users',u);}
-  else{if(!senha){toast('Informe uma senha!','warn');return;}if(allUsers.find(x=>x.login===login)){toast('Login já existe!','error');return;}const nu={id:uid(),nome,login,senha,perfil};await dbPut('users',nu);allUsers.push(nu);}
-  allUsers=await dbAll('users');closeModal('modalUsuario');renderUsuarios();toast('Usuário salvo!');
+  try{
+    if(editingUserId){
+      await apiPut('/api/users/'+editingUserId,{nome,login,senha:senha||undefined,perfil});
+      const i=allUsers.findIndex(u=>u.id===editingUserId);if(i>=0)allUsers[i]={...allUsers[i],nome,login,perfil};
+    }else{
+      if(!senha){toast('Informe uma senha!','warn');return;}
+      const r=await apiPost('/api/users',{nome,login,senha,perfil});allUsers.push({id:r.id,nome,login,perfil,ativo:true});
+    }
+    closeModal('modalUsuario');renderUsuarios();toast(editingUserId?'Usuário atualizado!':'Usuário criado!');editingUserId=null;
+  }catch(e){toast('Erro: '+e.message,'error');}
 }
-async function deletarUsuario(id){if(!confirm('Remover?'))return;await dbDel('users',id);allUsers=allUsers.filter(u=>u.id!==id);renderUsuarios();}
+async function deletarUsuario(id){
+  if(!confirm('Remover?'))return;
+  try{
+    await apiDel('/api/users/'+id);allUsers=allUsers.filter(u=>u.id!==id);renderUsuarios();toast('Usuário removido.');
+  }catch(e){toast('Erro: '+e.message,'error');}
+}
 
 // ══════════════════════════════════════════════════
 // CONFIGURAÇÕES
@@ -1637,10 +1739,12 @@ async function deletarUsuario(id){if(!confirm('Remover?'))return;await dbDel('us
 // SALVAR FLAG / ATIVIDADE
 // ══════════════════════════════════════════════════
 async function salvarFlag(numId,status,user,duracao=null){
-  if(status==='inexistente'){await dbDel('numeros',numId);allNumeros=allNumeros.filter(n=>n.id!==numId);}
-  else{const num=allNumeros.find(n=>n.id===numId);if(num){num.status=status;await dbPut('numeros',num);}}
-  const atv={id:uid(),userId:user.id,userName:user.nome,numId,status,duracao,dia:todayStr(),ts:Date.now()};
-  await dbPut('atividades',atv);allAtividades.push(atv);
+  try{
+    await apiPut('/api/numeros/'+numId+'/status',{status});
+    if(status==='inexistente'){allNumeros=allNumeros.filter(n=>n.id!==numId);}else{const num=allNumeros.find(n=>n.id===numId);if(num)num.status=status;}
+    const atv={id:uid(),userId:user.id,userName:user.nome,numId,status,duracao,dia:todayStr(),ts:Date.now()};
+    await apiPost('/api/atividades',atv);allAtividades.push(atv);
+  }catch(e){console.error('salvarFlag:',e.message);}
 }
 
 // ══════════════════════════════════════════════════
@@ -1798,7 +1902,7 @@ async function presencialFinalizar(){
   if(!confirm('Confirmar finalização da entrevista?'))return;
   const duracao=dInicioEntrev?Date.now()-dInicioEntrev:null;
   const entrev={id:uid(),pesquisaId:dPesquisa.id,userId:currentUser.id,userName:currentUser.nome,respostas:JSON.parse(JSON.stringify(dRespostas)),duracao,dia:todayStr(),ts:Date.now()};
-  await dbPut('entrevistas',entrev);allEntrevistas.push(entrev);
+  await apiPost('/api/entrevistas',entrev);allEntrevistas.push(entrev);
   toast('✅ Entrevista registrada!');
   // Reset para nova entrevista
   dRespostas={};dPergAtual=0;dInicioEntrev=null;
@@ -1958,16 +2062,16 @@ function renderMinimap(){
 async function finalizarEntrevista(){
   if(!dNumAtual||!dPesquisa)return;
   const perguntas=dPesquisa.perguntas||[];
-  const todasRespondidas=perguntas.every(p=>(dRespostas[p.id]||[]).length>0);
-  if(!todasRespondidas){toast('Responda todas as perguntas antes de finalizar!','warn');return;}
+  if(!perguntas.every(p=>(dRespostas[p.id]||[]).length>0)){toast('Responda todas as perguntas antes de finalizar!','warn');return;}
   const agora=Date.now(),duracao=dInicioEntrev?agora-dInicioEntrev:null;
-  const entrev={id:uid(),pesquisaId:dPesquisa.id,userId:currentUser.id,userName:currentUser.nome,numId:dNumAtual.id,telefone:dNumAtual.telefone,cidade:dNumAtual.cidade,estado:dNumAtual.estado,respostas:JSON.parse(JSON.stringify(dRespostas)),inicio:dInicioEntrev,fim:agora,duracao,dia:todayStr(),ts:agora};
-  await dbPut('entrevistas',entrev);allEntrevistas.push(entrev);
-  await salvarFlag(dNumAtual.id,'atendeu',currentUser,duracao);
-  toast('✅ Entrevista finalizada!');
-  dNumAtual=null;dFlag=null;dRespostas={};dPergAtual=0;dInicioEntrev=null;
-  renderMinimap();
-  await novoNumero();
+  const entrev={id:uid(),pesquisaId:dPesquisa.id,userId:currentUser.id,userName:currentUser.nome,
+    respostas:JSON.parse(JSON.stringify(dRespostas)),duracao,cidade:dNumAtual?.cidade,dia:todayStr(),ts:agora};
+  try{
+    await apiPost('/api/entrevistas',entrev);allEntrevistas.push(entrev);
+    await salvarFlag(dNumAtual.id,'atendeu',currentUser,duracao);
+    toast('✅ Entrevista finalizada!');
+    dNumAtual=null;dFlag=null;dRespostas={};dPergAtual=0;dInicioEntrev=null;renderMinimap();await novoNumero();
+  }catch(e){toast('Erro ao finalizar: '+e.message,'error');}
 }
 
 // ══════════════════════════════════════════════════
@@ -2095,7 +2199,7 @@ async function gFinalizarEntrevista(){
   const perguntas=dPesquisa.perguntas||[];if(!perguntas.every(p=>(dRespostas[p.id]||[]).length>0)){toast('Responda todas as perguntas!','warn');return;}
   const agora=Date.now(),duracao=dInicioEntrev?agora-dInicioEntrev:null;
   const entrev={id:uid(),pesquisaId:dPesquisa.id,userId:currentUser.id,userName:currentUser.nome,numId:dNumAtual.id,telefone:dNumAtual.telefone,cidade:dNumAtual.cidade,estado:dNumAtual.estado,respostas:JSON.parse(JSON.stringify(dRespostas)),inicio:dInicioEntrev,fim:agora,duracao,dia:todayStr(),ts:agora};
-  await dbPut('entrevistas',entrev);allEntrevistas.push(entrev);
+  await apiPost('/api/entrevistas',entrev);allEntrevistas.push(entrev);
   await salvarFlag(dNumAtual.id,'atendeu',currentUser,duracao);
   toast('✅ Entrevista finalizada!');
   dNumAtual=null;dFlag=null;dRespostas={};dPergAtual=0;dInicioEntrev=null;
@@ -2469,17 +2573,20 @@ function applyLogos(){
 
 // ── salvarConfigs ──────────────────────────────────
 async function salvarConfigs(){
-  sysConfigs={
-    inatividade:parseInt(document.getElementById('cfgInatividade').value)||15,
-    acima:parseInt(document.getElementById('cfgAcima').value)||30,
-    abaixo:parseInt(document.getElementById('cfgAbaixo').value)||30,
-    abaixoMedia:parseInt(document.getElementById('cfgAbaixoMedia').value)||30,
-    ativoInatividade:document.getElementById('cfgAtivoInatividade').checked,
-    ativoAcima:document.getElementById('cfgAtivoAcima').checked,
-    ativoAbaixo:document.getElementById('cfgAtivoAbaixo').checked,
-    ativoAbaixoMedia:document.getElementById('cfgAtivoAbaixoMedia').checked
-  };
-  await dbPut('configs',{id:'main',...sysConfigs});toast('Configurações salvas!');
+  const inatividade=parseInt(document.getElementById('cfgInatividade').value)||15;
+  const acima=parseInt(document.getElementById('cfgAcima').value)||30;
+  const abaixo=parseInt(document.getElementById('cfgAbaixo').value)||30;
+  const abaixoMedia=parseInt(document.getElementById('cfgAbaixoMedia').value)||30;
+  const ativoInatividade=document.getElementById('cfgAtivoInatividade').checked;
+  const ativoAcima=document.getElementById('cfgAtivoAcima').checked;
+  const ativoAbaixo=document.getElementById('cfgAtivoAbaixo').checked;
+  const ativoAbaixoMedia=document.getElementById('cfgAtivoAbaixoMedia').checked;
+  sysConfigs={inatividade,acima,abaixo,abaixoMedia,ativoInatividade,ativoAcima,ativoAbaixo,ativoAbaixoMedia};
+  try{
+    await apiPut('/api/configs',{inatividade,acima,abaixo,abaixo_media:abaixoMedia,
+      ativo_inatividade:ativoInatividade,ativo_acima:ativoAcima,ativo_abaixo:ativoAbaixo,ativo_abaixo_media:ativoAbaixoMedia});
+    toast('Configurações salvas!');
+  }catch(e){toast('Erro ao salvar: '+e.message,'error');}
 }
 
 // ── Admin Minhas Pesquisas ─────────────────────────
@@ -2581,50 +2688,42 @@ async function executarImportGrande(){
   if(!nome){toast('Informe o nome da base!','warn');return;}
   const linhas=texto.split('\n').map(l=>l.trim()).filter(Boolean);
   if(linhas.length<2){toast('Nenhum dado encontrado!','warn');return;}
-  // Detectar separador
   const sep=linhas[0].includes(';')?';':linhas[0].includes('\t')?'\t':',';
   const headers=linhas[0].split(sep).map(h=>h.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''));
-  // Mapear colunas
   const idx={estado:-1,cidade:-1,telefone:-1,bairro:-1,endereco:-1,cep:-1};
   headers.forEach((h,i)=>{
     if(h.includes('estado'))idx.estado=i;
     else if(h.includes('cidade'))idx.cidade=i;
     else if(h.includes('telefone')||h.includes('fone')||h.includes('tel'))idx.telefone=i;
     else if(h.includes('bairro'))idx.bairro=i;
-    else if(h.includes('endereco')||h.includes('endereço')||h.includes('logradouro'))idx.endereco=i;
+    else if(h.includes('endereco')||h.includes('endere\u00e7o')||h.includes('logradouro'))idx.endereco=i;
     else if(h.includes('cep'))idx.cep=i;
   });
   if(idx.telefone<0){toast('Coluna "Telefone" não encontrada no cabeçalho!','error');return;}
-  // Criar arquivo base
-  const arq={id:uid(),nome,tipo,estado:'',cidade:'',dataImport:new Date().toLocaleDateString('pt-BR'),totalImportado:0};
-  let importados=0,duplicados=0,semTel=0;
-  const novosNumeros=[];
+  const arquivoId=uid();
   const telExistentes=new Set(allNumeros.map(n=>n.telefone.replace(/\D/g,'')));
+  let duplicados=0;
+  const novosNumeros=[];
   for(let i=1;i<linhas.length;i++){
     const cols=linhas[i].split(sep).map(c=>c.trim().replace(/^"|"$/g,''));
     const tel=(idx.telefone>=0?cols[idx.telefone]:'').replace(/\s/g,'');
-    if(!tel){semTel++;continue;}
+    if(!tel)continue;
     const telLimpo=tel.replace(/\D/g,'');
     if(telExistentes.has(telLimpo)){duplicados++;continue;}
     telExistentes.add(telLimpo);
-    const estado=idx.estado>=0?cols[idx.estado]:'';
-    const cidade=idx.cidade>=0?cols[idx.cidade]:'';
-    const bairro=idx.bairro>=0?cols[idx.bairro]:'';
-    const endereco=idx.endereco>=0?cols[idx.endereco]:'';
-    const cep=idx.cep>=0?cols[idx.cep]:'';
-    const estadoCidade=`${estado}|${cidade}`;
-    novosNumeros.push({id:uid(),arquivoId:arq.id,telefone:tel,estado,cidade,estadoCidade,bairro,endereco,cep,tipo,status:'disponivel',data:new Date().toLocaleDateString('pt-BR')});
-    importados++;
+    novosNumeros.push({telefone:tel,estado:idx.estado>=0?cols[idx.estado]:'',cidade:idx.cidade>=0?cols[idx.cidade]:'',
+      bairro:idx.bairro>=0?cols[idx.bairro]:'',endereco:idx.endereco>=0?cols[idx.endereco]:'',cep:idx.cep>=0?cols[idx.cep]:''});
   }
-  // Salvar em lotes
-  arq.totalImportado=importados;
-  arq.estado=novosNumeros[0]?.estado||'';
-  arq.cidade=novosNumeros[0]?.cidade||'';
-  await dbPut('arquivos',arq);allArquivos.push(arq);
-  for(const n of novosNumeros){await dbPut('numeros',n);allNumeros.push(n);}
-  closeModal('overlayImportGrande');
-  renderArquivos();
-  toast(`✅ ${importados} contatos importados! ${duplicados} duplicados ignorados.`);
+  if(!novosNumeros.length){toast('Nenhum número novo para importar!','warn');return;}
+  const arq={id:arquivoId,nome,tipo,estado:novosNumeros[0]?.estado||'',cidade:novosNumeros[0]?.cidade||'',
+    dataImport:new Date().toLocaleDateString('pt-BR'),totalImportado:novosNumeros.length};
+  try{
+    await apiPost('/api/arquivos',arq);
+    const r=await apiPost('/api/numeros/bulk',{arquivoId,estado:arq.estado,cidade:arq.cidade,tipo,numeros:novosNumeros});
+    arq.totalImportado=r.inseridos||novosNumeros.length;allArquivos.push(arq);
+    closeModal('overlayImportGrande');renderArquivos();
+    toast(`✅ ${arq.totalImportado} contatos importados! ${duplicados} duplicados ignorados.`);
+  }catch(e){toast('Erro: '+e.message,'error');}
 }
 
 // ── Criar Base por Filtro ──────────────────────────
@@ -2701,7 +2800,7 @@ async function executarCriarBase(){
     // Comportamento: cria nova base mas não duplica números — referencia os mesmos
     // (a base é apenas um agrupamento lógico)
   }
-  await dbPut('arquivos',arq);allArquivos.push(arq);
+  await apiPost('/api/arquivos',arq);allArquivos.push(arq);
   closeModal('overlaycriarBase');
   renderArquivos();
   toast(`✅ Base "${nome}" criada com ${filtrados.length} números!`);
@@ -2710,341 +2809,15 @@ async function executarCriarBase(){
 // ── Alertas respeitam toggles ──────────────────────
 // (a função renderGestorDash já usa sysConfigs — basta checar ativoX)
 
-
-// ══════════════════════════════════════════════════
-// API CLIENT — substitui IndexedDB
-// ══════════════════════════════════════════════════
-const API_BASE = '';
-
-let _token = null;
-
-function apiToken() {
-  if (!_token) _token = sessionStorage.getItem('api_token');
-  return _token;
-}
-
-async function apiFetch(path, opts = {}) {
-  const headers = { 'Content-Type': 'application/json' };
-  const token = apiToken();
-  if (token) headers['Authorization'] = 'Bearer ' + token;
-  const res = await fetch(API_BASE + path, {
-    ...opts,
-    headers: { ...headers, ...(opts.headers || {}) },
-    body: opts.body ? JSON.stringify(opts.body) : undefined
-  });
-  if (res.status === 401) { doLogout(); return null; }
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error || res.statusText);
-  }
-  return res.json();
-}
-
-const apiGet  = (path)        => apiFetch(path, { method: 'GET' });
-const apiPost = (path, body)  => apiFetch(path, { method: 'POST', body });
-const apiPut  = (path, body)  => apiFetch(path, { method: 'PUT',  body });
-const apiDel  = (path)        => apiFetch(path, { method: 'DELETE' });
-
-// ── Login / Logout ────────────────────────────────
-async function doLogin(){
-  const login = document.getElementById('loginUser').value.trim();
-  const senha = document.getElementById('loginPass').value.trim();
-  try {
-    const data = await apiPost('/api/auth/login', { login, senha });
-    if (!data) return;
-    _token = data.token;
-    sessionStorage.setItem('api_token', data.token);
-    sessionStorage.setItem('ct_user', JSON.stringify({ id: data.user.id }));
-    currentUser = data.user;
-    await carregarTodosDados();
-    afterLogin();
-  } catch(e) {
-    document.getElementById('loginErr').style.display = 'block';
-  }
-}
-
-function doLogout(){
-  _token = null;
-  currentUser = null;
-  sessionStorage.removeItem('api_token');
-  sessionStorage.removeItem('ct_user');
-  allUsers=[]; allNumeros=[]; allArquivos=[]; allAtividades=[];
-  allRegioes=[]; allPesquisas=[]; allEntrevistas=[]; allModelos=[];
-  dPesquisa=null; dNumAtual=null; dFlag=null; dUsados=new Set();
-  dRespostas={}; dPergAtual=0; dInicioEntrev=null;
-  document.getElementById('loginUser').value='';
-  document.getElementById('loginPass').value='';
-  showPage('page-login');
-}
-
-async function carregarTodosDados(){
-  const [users, arquivos, numerosRes, regioes, pesquisas, entrevistas, modelos, configs] = await Promise.all([
-    apiGet('/api/users'),
-    apiGet('/api/arquivos'),
-    apiGet('/api/numeros?limit=5000'),
-    apiGet('/api/regioes'),
-    apiGet('/api/pesquisas'),
-    apiGet('/api/entrevistas'),
-    apiGet('/api/modelos'),
-    apiGet('/api/configs')
-  ]);
-  allUsers       = users        || [];
-  allArquivos    = arquivos     || [];
-  allNumeros     = (numerosRes?.data) || [];
-  allRegioes     = regioes      || [];
-  allPesquisas   = pesquisas    || [];
-  allEntrevistas = entrevistas  || [];
-  allModelos     = modelos      || [];
-
-  if (configs) {
-    sysConfigs = {
-      inatividade: configs.inatividade || 15,
-      acima: configs.acima || 30,
-      abaixo: configs.abaixo || 30,
-      abaixoMedia: configs.abaixo_media || 30,
-      ativoInatividade: configs.ativo_inatividade !== false,
-      ativoAcima: configs.ativo_acima !== false,
-      ativoAbaixo: configs.ativo_abaixo !== false,
-      ativoAbaixoMedia: configs.ativo_abaixo_media !== false
-    };
-    if (configs.logo_b64) {
-      document.querySelectorAll('.sys-logo,#loginLogoImg,#topbarLogoImg,#gestorLogoImg,#entrevLogoImg').forEach(el => { if(el) el.src = configs.logo_b64; });
-    }
-  }
-}
-
-// ── Salvar configs ────────────────────────────────
-async function salvarConfigs(){
-  const inatividade = parseInt(document.getElementById('cfgInatividade').value)||15;
-  const acima       = parseInt(document.getElementById('cfgAcima').value)||30;
-  const abaixo      = parseInt(document.getElementById('cfgAbaixo').value)||30;
-  const abaixoMedia = parseInt(document.getElementById('cfgAbaixoMedia').value)||30;
-  const ativoInatividade = document.getElementById('cfgAtivoInatividade').checked;
-  const ativoAcima       = document.getElementById('cfgAtivoAcima').checked;
-  const ativoAbaixo      = document.getElementById('cfgAtivoAbaixo').checked;
-  const ativoAbaixoMedia = document.getElementById('cfgAtivoAbaixoMedia').checked;
-  sysConfigs = { inatividade, acima, abaixo, abaixoMedia, ativoInatividade, ativoAcima, ativoAbaixo, ativoAbaixoMedia };
-  try {
-    await apiPut('/api/configs', { inatividade, acima, abaixo, abaixo_media: abaixoMedia, ativo_inatividade: ativoInatividade, ativo_acima: ativoAcima, ativo_abaixo: ativoAbaixo, ativo_abaixo_media: ativoAbaixoMedia });
-    toast('Configurações salvas!');
-  } catch(e) { toast('Erro ao salvar: ' + e.message, 'error'); }
-}
-
-// ── Usuários ──────────────────────────────────────
-async function salvarUsuario(){
-  const nome   = document.getElementById('uNome').value.trim();
-  const login  = document.getElementById('uLogin').value.trim();
-  const senha  = document.getElementById('uSenha').value.trim();
-  const perfil = document.getElementById('uPerfil').value;
-  if(!nome||!login){toast('Preencha nome e login!','warn');return;}
-  try {
-    if(editingUserId){
-      await apiPut('/api/users/'+editingUserId, {nome,login,senha:senha||undefined,perfil});
-      const i=allUsers.findIndex(u=>u.id===editingUserId);
-      if(i>=0) allUsers[i]={...allUsers[i],nome,login,perfil};
-    } else {
-      if(!senha){toast('Informe uma senha!','warn');return;}
-      const r = await apiPost('/api/users', {nome,login,senha,perfil});
-      allUsers.push({id:r.id,nome,login,perfil});
-    }
-    closeModal('overlayUsuario');
-    renderUsuarios();
-    toast(editingUserId?'Usuário atualizado!':'Usuário criado!');
-    editingUserId=null;
-  } catch(e){ toast('Erro: '+e.message,'error'); }
-}
-
-async function deletarUsuario(id){
-  if(!confirm('Remover?'))return;
-  try {
-    await apiDel('/api/users/'+id);
-    allUsers=allUsers.filter(u=>u.id!==id);
-    renderUsuarios();
-    toast('Usuário removido.');
-  } catch(e){ toast('Erro: '+e.message,'error'); }
-}
-
-// ── Regiões ───────────────────────────────────────
-async function salvarRegiao(){
-  const nome = document.getElementById('rNome').value.trim();
-  const tipo = document.getElementById('rTipo').value;
-  const estado = document.getElementById('rEstado').value;
-  const sel = document.getElementById('rCidades');
-  const cidades = Array.from(sel.selectedOptions).map(o=>o.value);
-  if(!nome||!estado||!cidades.length){toast('Preencha todos os campos!','warn');return;}
-  const id = editingRegiaoId || uid();
-  try {
-    await apiPost('/api/regioes', {id,nome,tipo,estado,cidades});
-    const item={id,nome,tipo,estado,cidades};
-    if(!editingRegiaoId) allRegioes.push(item);
-    else { const i=allRegioes.findIndex(r=>r.id===id); allRegioes[i]=item; }
-    closeModal('overlayRegiao');
-    renderRegioes();
-    toast(editingRegiaoId?'Região atualizada!':'Região criada!');
-    editingRegiaoId=null;
-  } catch(e){ toast('Erro: '+e.message,'error'); }
-}
-
-async function deletarRegiao(id){
-  if(!confirm('Remover?'))return;
-  try {
-    await apiDel('/api/regioes/'+id);
-    allRegioes=allRegioes.filter(r=>r.id!==id);
-    renderRegioes();
-    toast('Região removida.');
-  } catch(e){ toast('Erro: '+e.message,'error'); }
-}
-
-// ── Modelos ───────────────────────────────────────
-async function salvarModelo(){
-  const nome = document.getElementById('modeloNome').value.trim();
-  if(!nome){toast('Informe o nome!','warn');return;}
-  const id = editingModeloId || uid();
-  try {
-    await apiPost('/api/modelos', {id,nome,perguntas:modeloPerguntas});
-    const item={id,nome,perguntas:modeloPerguntas};
-    if(!editingModeloId) allModelos.push(item);
-    else { const i=allModelos.findIndex(m=>m.id===id); allModelos[i]=item; }
-    closeModal('overlayModelo');
-    renderModelos();
-    toast(editingModeloId?'Modelo atualizado!':'Modelo criado!');
-    editingModeloId=null;
-  } catch(e){ toast('Erro: '+e.message,'error'); }
-}
-
-async function deletarModelo(id){
-  if(!confirm('Remover?'))return;
-  try {
-    await apiDel('/api/modelos/'+id);
-    allModelos=allModelos.filter(m=>m.id!==id);
-    renderModelos();
-    toast('Modelo removido.');
-  } catch(e){ toast('Erro: '+e.message,'error'); }
-}
-
-// ── Pesquisas ─────────────────────────────────────
-async function salvarPesquisa(){
-  const nome   = document.getElementById('pNome').value.trim();
-  const estado = document.getElementById('pEstado').value;
-  const locVal = document.getElementById('pLocal').value;
-  const meta   = parseInt(document.getElementById('pMeta').value)||100;
-  const status = document.getElementById('pStatus').value;
-  const tipoNum= document.getElementById('pTipoNum').value||null;
-  const modalidade = document.getElementById('pModalidade')?.value||'telefone';
-  const pesquisadores = Array.from(document.querySelectorAll('#pPesqList input:checked')).map(c=>c.value);
-  if(!nome||!estado){toast('Preencha nome e estado!','warn');return;}
-  let cidade=null,regiaoId=null;
-  if(locVal.startsWith('regiao:')){regiaoId=locVal.replace('regiao:','');}else{cidade=locVal||null;}
-  const id = editingPesquisaId || uid();
-  try {
-    await apiPost('/api/pesquisas', {id,nome,estado,cidade,regiaoId,meta,status,tipoNum,modalidade,perguntas:pesqPerguntas,pesquisadores});
-    const item={id,nome,estado,cidade,regiaoId,meta,status,tipoNum,modalidade,perguntas:pesqPerguntas,pesquisadores};
-    if(!editingPesquisaId) allPesquisas.push(item);
-    else { const i=allPesquisas.findIndex(p=>p.id===id); allPesquisas[i]=item; }
-    closeModal('overlayPesquisa');
-    renderPesquisas();
-    toast(editingPesquisaId?'Pesquisa atualizada!':'Pesquisa criada!');
-    editingPesquisaId=null;
-  } catch(e){ toast('Erro: '+e.message,'error'); }
-}
-
-async function deletarPesquisa(id){
-  if(!confirm('Remover esta pesquisa e todas as entrevistas?'))return;
-  try {
-    await apiDel('/api/pesquisas/'+id);
-    allPesquisas=allPesquisas.filter(p=>p.id!==id);
-    allEntrevistas=allEntrevistas.filter(e=>e.pesquisaId!==id);
-    renderPesquisas();
-    toast('Pesquisa removida.');
-  } catch(e){ toast('Erro: '+e.message,'error'); }
-}
-
-// ── Importar CSV / Números ────────────────────────
-async function importarCSV(){
-  const nomeArq = document.getElementById('csvNome').value.trim();
-  const estado  = document.getElementById('csvEstado').value;
-  const cidade  = document.getElementById('csvCidade').value;
-  const tipo    = document.getElementById('csvTipo').value;
-  const raw     = document.getElementById('csvTexto').value.trim();
-  if(!nomeArq||!estado||!raw){toast('Preencha todos os campos!','warn');return;}
-  const csvLines = [...new Set(raw.split(/[\n,;]+/).map(l=>l.replace(/\D/g,'')).filter(l=>l.length>=8&&l.length<=11))];
-  if(!csvLines.length){toast('Nenhum número válido encontrado!','warn');return;}
-  const arquivoId = uid();
-  const arq = {id:arquivoId,nome:nomeArq,tipo,estado,cidade,dataImport:new Date().toLocaleDateString('pt-BR'),totalImportado:csvLines.length};
-  try {
-    await apiPost('/api/arquivos', arq);
-    const numeros = csvLines.map(tel => ({telefone:tel,cidade}));
-    const r = await apiPost('/api/numeros/bulk', {arquivoId,estado,cidade,tipo,numeros});
-    allArquivos.push({...arq, totalAtual: r.inseridos});
-    closeModal('overlayImport');
-    renderArquivos();
-    toast(`✅ ${r.inseridos} números importados!`);
-  } catch(e){ toast('Erro: '+e.message,'error'); }
-}
-
-async function deletarArquivo(id){
-  if(!confirm('Remover arquivo e todos os números?'))return;
-  try {
-    await apiDel('/api/numeros/arquivo/'+id);
-    allArquivos=allArquivos.filter(a=>a.id!==id);
-    allNumeros=allNumeros.filter(n=>n.arquivoId!==id);
-    renderArquivos();
-    toast('Arquivo removido.');
-  } catch(e){ toast('Erro: '+e.message,'error'); }
-}
-
-async function resetarArquivo(id){
-  try {
-    await apiPut('/api/numeros/arquivo/'+id+'/resetar', {});
-    allNumeros.filter(n=>n.arquivoId===id&&['atendeu','ocupado','nao-atendeu'].includes(n.status)).forEach(n=>n.status='disponivel');
-    renderArquivos();
-    toast('Status resetados!');
-  } catch(e){ toast('Erro: '+e.message,'error'); }
-}
-
-// ── Flag / Atividade ──────────────────────────────
-async function salvarFlag(numId, status, user, duracao=null){
-  try {
-    await apiPut('/api/numeros/'+numId+'/status', {status});
-    if(status==='inexistente'){allNumeros=allNumeros.filter(n=>n.id!==numId);}
-    else{const num=allNumeros.find(n=>n.id===numId);if(num)num.status=status;}
-    const atv={id:uid(),pesquisaId:dPesquisa?.id,numId,status,duracao,dia:todayStr(),ts:Date.now()};
-    await apiPost('/api/atividades', atv);
-    allAtividades.push({...atv,userId:user.id,userName:user.nome});
-  } catch(e){ console.error('salvarFlag:', e.message); }
-}
-
-// ── Finalizar Entrevista ──────────────────────────
-async function finalizarEntrevista(){
-  if(!dNumAtual||!dPesquisa)return;
-  const perguntas=dPesquisa.perguntas||[];
-  const todasRespondidas=perguntas.every(p=>(dRespostas[p.id]||[]).length>0);
-  if(!todasRespondidas){toast('Responda todas as perguntas antes de finalizar!','warn');return;}
-  const agora=Date.now(),duracao=dInicioEntrev?agora-dInicioEntrev:null;
-  const entrev={id:uid(),pesquisaId:dPesquisa.id,userId:currentUser.id,userName:currentUser.nome,
-    respostas:JSON.parse(JSON.stringify(dRespostas)),duracao,cidade:dNumAtual?.cidade,
-    dia:todayStr(),ts:agora};
-  try {
-    await apiPost('/api/entrevistas', entrev);
-    allEntrevistas.push(entrev);
-    await salvarFlag(dNumAtual.id,'atendeu',currentUser,duracao);
-    toast('✅ Entrevista finalizada!');
-    dNumAtual=null;dFlag=null;dRespostas={};dPergAtual=0;dInicioEntrev=null;
-    renderMinimap();
-    await novoNumero();
-  } catch(e){ toast('Erro ao finalizar: '+e.message,'error'); }
-}
-
-// ── Init ──────────────────────────────────────────
 async function init(){
-  const token = sessionStorage.getItem('api_token');
-  const saved = sessionStorage.getItem('ct_user');
-  if(token && saved){
-    _token = token;
-    try {
+  const token=sessionStorage.getItem('api_token');
+  const saved=sessionStorage.getItem('ct_user');
+  if(token&&saved){
+    _token=token;
+    try{
       await carregarTodosDados();
-      const s = JSON.parse(saved);
-      currentUser = allUsers.find(u=>u.id===s.id);
+      const s=JSON.parse(saved);
+      currentUser=allUsers.find(u=>u.id===s.id);
       if(currentUser){
         document.getElementById('cfgInatividade').value=sysConfigs.inatividade;
         document.getElementById('cfgAcima').value=sysConfigs.acima;
@@ -3056,7 +2829,7 @@ async function init(){
         document.getElementById('cfgAtivoAbaixoMedia').checked=sysConfigs.ativoAbaixoMedia!==false;
         afterLogin();
       }
-    } catch(e){ sessionStorage.clear(); }
+    }catch(e){sessionStorage.clear();}
   }
 }
 init();
