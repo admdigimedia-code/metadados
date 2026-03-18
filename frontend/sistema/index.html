@@ -516,6 +516,20 @@ tr:hover td{background:var(--gray-light);}
           <table><thead><tr><th>Pesquisador</th><th>Total</th><th>T.Médio</th><th>Status</th></tr></thead><tbody id="dashProdTbody"></tbody></table>
         </div>
       </div>
+      <!-- DASHBOARD DE ENTREVISTAS -->
+      <div style="margin-top:20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+          <div style="font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);">Entrevistas por Dia</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <select id="dashEntPesquisa" class="select-inline" onchange="renderDashEntrevistas()" style="min-width:180px;"><option value="">Todas as pesquisas</option></select>
+            <button class="btn btn-ghost btn-sm" onclick="exportarEntrevistasCsv()">⬇ CSV</button>
+          </div>
+        </div>
+        <div class="card" style="padding:20px;">
+          <canvas id="dashEntChart" height="90"></canvas>
+          <div id="dashEntVazio" style="display:none;text-align:center;padding:30px;color:var(--muted);font-size:.88rem;">Nenhuma entrevista registrada.</div>
+        </div>
+      </div>
     </div>
 
     <!-- PESQUISAS -->
@@ -1163,6 +1177,8 @@ function afterLogin(){
     populateEstado(document.getElementById('rEstado'));
     carregarFiltrosEstadosPesq();
     showView('dashboard');
+    popularDashEntPesquisa();
+    renderDashEntrevistas();
   } else if(u.perfil==='gestor'){
     showPage('page-gestor');
     document.getElementById('gestorAvatar').textContent=initials(u.nome);
@@ -1190,7 +1206,7 @@ function showView(v){
   document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
   document.querySelectorAll('.nav-btn[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
-  if(v==='dashboard')renderDashboard();
+  if(v==='dashboard'){renderDashboard();popularDashEntPesquisa();renderDashEntrevistas();}
   else if(v==='pesquisas'){carregarFiltrosEstadosPesq();renderPesquisas();}
   else if(v==='modelos')renderModelos();
   else if(v==='regioes')renderRegioes();
@@ -1263,6 +1279,107 @@ function renderDashboard(){
 }
 
 // ══════════════════════════════════════════════════
+// DASHBOARD — ENTREVISTAS POR DIA
+// ══════════════════════════════════════════════════
+let dashEntChart=null;
+let dashEntDados=[];
+
+function popularDashEntPesquisa(){
+  const sel=document.getElementById('dashEntPesquisa');
+  if(!sel)return;
+  const val=sel.value;
+  sel.innerHTML='<option value="">Todas as pesquisas</option>';
+  allPesquisas.forEach(p=>sel.innerHTML+=`<option value="${p.id}" ${val===p.id?'selected':''}>${p.nome}</option>`);
+}
+
+async function renderDashEntrevistas(){
+  const pesquisaId=document.getElementById('dashEntPesquisa')?.value||'';
+  try{
+    const url='/api/entrevistas/stats'+(pesquisaId?'?pesquisaId='+pesquisaId:'');
+    const dados=await apiGet(url);
+    dashEntDados=dados||[];
+    _buildDashEntChart(dashEntDados);
+  }catch(e){console.error('dashEnt',e);}
+}
+
+function _buildDashEntChart(dados){
+  const canvas=document.getElementById('dashEntChart');
+  const vazio=document.getElementById('dashEntVazio');
+  if(!canvas)return;
+  if(!dados||dados.length===0){
+    canvas.style.display='none';vazio.style.display='block';
+    if(dashEntChart){try{dashEntChart.destroy();}catch(e){}dashEntChart=null;}
+    return;
+  }
+  canvas.style.display='block';vazio.style.display='none';
+  const sorted=[...dados].sort((a,b)=>a.dia>b.dia?1:-1).slice(-30);
+  const labels=sorted.map(d=>{
+    const[y,m,dia]=d.dia.split('-');
+    return`${dia}/${m}`;
+  });
+  const values=sorted.map(d=>d.total);
+  if(dashEntChart){try{dashEntChart.destroy();}catch(e){}dashEntChart=null;}
+  dashEntChart=new Chart(canvas,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[{
+        label:'Entrevistas',
+        data:values,
+        backgroundColor:'rgba(37,99,235,0.7)',
+        borderColor:'rgba(37,99,235,1)',
+        borderWidth:1.5,
+        borderRadius:5,
+        borderSkipped:false
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:true,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{title:function(items){
+          const idx=items[0].dataIndex;
+          return sorted[idx]?.dia||'';
+        }}}
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{font:{size:10}}},
+        y:{beginAtZero:true,ticks:{stepSize:1,font:{size:10}},grid:{color:'rgba(0,0,0,.05)'}}
+      }
+    }
+  });
+}
+
+function exportarEntrevistasCsv(){
+  const pesquisaId=document.getElementById('dashEntPesquisa')?.value||'';
+  const pesqNome=pesquisaId?(allPesquisas.find(p=>p.id===pesquisaId)?.nome||pesquisaId):'todas';
+  // usa allEntrevistas já carregado em memória — sem nova requisição
+  let lista=allEntrevistas||[];
+  if(pesquisaId)lista=lista.filter(e=>e.pesquisaId===pesquisaId);
+  if(lista.length===0){toast('Nenhuma entrevista para exportar.','warn');return;}
+  const pesqMap={};allPesquisas.forEach(p=>pesqMap[p.id]=p.nome);
+  const linhas=[['Data','Pesquisa','Pesquisador','Cidade','Duração(s)']];
+  lista.forEach(e=>{
+    linhas.push([
+      e.dia||'',
+      pesqMap[e.pesquisaId]||e.pesquisaId||'',
+      e.userName||'',
+      e.cidade||'',
+      e.duracao!=null?Math.round(e.duracao/1000):''
+    ]);
+  });
+  const csv=linhas.map(r=>r.map(c=>'"'+(String(c).replace(/"/g,'""'))+'"').join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`entrevistas_${pesqNome}_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('CSV exportado!');
+}
+
+// ══════════════════════════════════════════════════
 // MODELOS DE QUESTIONÁRIO
 // ══════════════════════════════════════════════════
 function renderModelos(){
@@ -1295,11 +1412,64 @@ function renderModeloPerguntasList(){
   el.innerHTML=modeloPerguntas.map((p,i)=>buildPerguntaEditor(p,i,'modeloPerguntas','modeloPerguntasList')).join('');
 }
 
+function _renderFn(listId){return listId==='modeloPerguntasList'?'ModeloPerguntasList':'PerguntasList';}
+
+function duplicarPergunta(arrName,i,listId){
+  const arr=window[arrName];
+  const copia=JSON.parse(JSON.stringify(arr[i]));
+  copia.id=uid();
+  arr.splice(i+1,0,copia);
+  window['render'+_renderFn(listId)]();
+}
+
+function moverPergunta(arrName,i,dir,listId){
+  const arr=window[arrName];
+  const j=i+dir;
+  if(j<0||j>=arr.length)return;
+  [arr[i],arr[j]]=[arr[j],arr[i]];
+  window['render'+_renderFn(listId)]();
+}
+
+function addOpcaoComFoco(arrName,i,listId){
+  const arr=window[arrName];
+  arr[i].opcoes.push({num:arr[i].opcoes.length+1,texto:''});
+  window['render'+_renderFn(listId)]();
+  // foca no último input de opção desta pergunta
+  setTimeout(()=>{
+    const list=document.getElementById(listId);
+    const blocos=list.querySelectorAll('[data-perg-idx]');
+    const bloco=Array.from(blocos).find(b=>b.dataset.pergIdx==i);
+    if(bloco){const inputs=bloco.querySelectorAll('.opcao-input');if(inputs.length)inputs[inputs.length-1].focus();}
+  },40);
+}
+
+function onOpcaoKeydown(e,arrName,i,oi,listId){
+  if(e.key!=='Enter')return;
+  e.preventDefault();
+  const arr=window[arrName];
+  const isLast=oi===arr[i].opcoes.length-1;
+  if(isLast){
+    addOpcaoComFoco(arrName,i,listId);
+  } else {
+    // avança para próximo input de opção
+    const list=document.getElementById(listId);
+    const blocos=list.querySelectorAll('[data-perg-idx]');
+    const bloco=Array.from(blocos).find(b=>b.dataset.pergIdx==i);
+    if(bloco){const inputs=bloco.querySelectorAll('.opcao-input');if(inputs[oi+1])inputs[oi+1].focus();}
+  }
+}
+
 function buildPerguntaEditor(p,i,arrName,listId){
-  return`<div style="background:var(--light);border-radius:11px;padding:14px;margin-bottom:10px;">
+  const total=window[arrName].length;
+  return`<div data-perg-idx="${i}" style="background:var(--light);border-radius:11px;padding:14px;margin-bottom:10px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <span style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Pergunta ${i+1}</span>
-      <button class="btn btn-danger btn-xs" onclick="${arrName}.splice(${i},1);render${listId==='modeloPerguntasList'?'ModeloPerguntasList':'PerguntasList'}()">🗑</button>
+      <div style="display:flex;gap:5px;align-items:center;">
+        <button class="btn btn-ghost btn-xs" title="Mover para cima" ${i===0?'disabled':''} onclick="moverPergunta('${arrName}',${i},-1,'${listId}')">▲</button>
+        <button class="btn btn-ghost btn-xs" title="Mover para baixo" ${i===total-1?'disabled':''} onclick="moverPergunta('${arrName}',${i},1,'${listId}')">▼</button>
+        <button class="btn btn-ghost btn-xs" title="Duplicar pergunta" onclick="duplicarPergunta('${arrName}',${i},'${listId}')">⧉</button>
+        <button class="btn btn-danger btn-xs" onclick="${arrName}.splice(${i},1);render${_renderFn(listId)}()">🗑</button>
+      </div>
     </div>
     <div class="form-row cols2" style="margin-bottom:8px;">
       <div class="form-field" style="margin-bottom:0;"><label>Texto</label><input type="text" value="${p.texto}" oninput="${arrName}[${i}].texto=this.value" placeholder="Digite a pergunta..."></div>
@@ -1307,8 +1477,8 @@ function buildPerguntaEditor(p,i,arrName,listId){
     </div>
     <div style="margin-top:8px;">
       <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:5px;">Opções</div>
-      ${p.opcoes.map((o,oi)=>`<div style="display:flex;gap:5px;margin-bottom:5px;align-items:center;"><span style="width:22px;height:22px;border-radius:5px;background:var(--blue-light);color:var(--blue);font-size:.7rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${o.num}</span><input type="text" value="${o.texto}" oninput="${arrName}[${i}].opcoes[${oi}].texto=this.value" placeholder="Texto da opção..." style="flex:1;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:.83rem;font-family:var(--font);outline:none;"><button class="btn btn-danger btn-xs" onclick="${arrName}[${i}].opcoes.splice(${oi},1);${arrName}[${i}].opcoes.forEach((o,i)=>o.num=i+1);render${listId==='modeloPerguntasList'?'ModeloPerguntasList':'PerguntasList'}()">✕</button></div>`).join('')}
-      <button class="btn btn-ghost btn-xs" onclick="${arrName}[${i}].opcoes.push({num:${arrName}[${i}].opcoes.length+1,texto:''});render${listId==='modeloPerguntasList'?'ModeloPerguntasList':'PerguntasList'}()">+ Opção</button>
+      ${p.opcoes.map((o,oi)=>`<div style="display:flex;gap:5px;margin-bottom:5px;align-items:center;"><span style="width:22px;height:22px;border-radius:5px;background:var(--blue-light);color:var(--blue);font-size:.7rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${o.num}</span><input type="text" class="opcao-input" value="${o.texto}" oninput="${arrName}[${i}].opcoes[${oi}].texto=this.value" onkeydown="onOpcaoKeydown(event,'${arrName}',${i},${oi},'${listId}')" placeholder="Texto da opção..." style="flex:1;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:.83rem;font-family:var(--font);outline:none;"><button class="btn btn-danger btn-xs" onclick="${arrName}[${i}].opcoes.splice(${oi},1);${arrName}[${i}].opcoes.forEach((o,i)=>o.num=i+1);render${_renderFn(listId)}()">✕</button></div>`).join('')}
+      <button class="btn btn-ghost btn-xs" onclick="addOpcaoComFoco('${arrName}',${i},'${listId}')">+ Opção</button>
     </div>
   </div>`;
 }
