@@ -1461,6 +1461,7 @@ function onOpcaoKeydown(e,arrName,i,oi,listId){
 
 function buildPerguntaEditor(p,i,arrName,listId){
   const total=window[arrName].length;
+  const rfn=listId==='modeloPerguntasList'?'ModeloPerguntasList':'PerguntasList';
   return`<div data-perg-idx="${i}" style="background:var(--light);border-radius:11px;padding:14px;margin-bottom:10px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <span style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Pergunta ${i+1}</span>
@@ -1468,7 +1469,7 @@ function buildPerguntaEditor(p,i,arrName,listId){
         <button class="btn btn-ghost btn-xs" title="Mover para cima" ${i===0?'disabled':''} onclick="moverPergunta('${arrName}',${i},-1,'${listId}')">▲</button>
         <button class="btn btn-ghost btn-xs" title="Mover para baixo" ${i===total-1?'disabled':''} onclick="moverPergunta('${arrName}',${i},1,'${listId}')">▼</button>
         <button class="btn btn-ghost btn-xs" title="Duplicar pergunta" onclick="duplicarPergunta('${arrName}',${i},'${listId}')">⧉</button>
-        <button class="btn btn-danger btn-xs" onclick="${arrName}.splice(${i},1);render${_renderFn(listId)}()">🗑</button>
+        <button class="btn btn-danger btn-xs" onclick="${arrName}.splice(${i},1);render${rfn}()">🗑</button>
       </div>
     </div>
     <div class="form-row cols2" style="margin-bottom:8px;">
@@ -1477,7 +1478,7 @@ function buildPerguntaEditor(p,i,arrName,listId){
     </div>
     <div style="margin-top:8px;">
       <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:5px;">Opções</div>
-      ${p.opcoes.map((o,oi)=>`<div style="display:flex;gap:5px;margin-bottom:5px;align-items:center;"><span style="width:22px;height:22px;border-radius:5px;background:var(--blue-light);color:var(--blue);font-size:.7rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${o.num}</span><input type="text" class="opcao-input" value="${o.texto}" oninput="${arrName}[${i}].opcoes[${oi}].texto=this.value" onkeydown="onOpcaoKeydown(event,'${arrName}',${i},${oi},'${listId}')" placeholder="Texto da opção..." style="flex:1;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:.83rem;font-family:var(--font);outline:none;"><button class="btn btn-danger btn-xs" onclick="${arrName}[${i}].opcoes.splice(${oi},1);${arrName}[${i}].opcoes.forEach((o,i)=>o.num=i+1);render${_renderFn(listId)}()">✕</button></div>`).join('')}
+      ${p.opcoes.map((o,oi)=>`<div style="display:flex;gap:5px;margin-bottom:5px;align-items:center;"><span style="width:22px;height:22px;border-radius:5px;background:var(--blue-light);color:var(--blue);font-size:.7rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${o.num}</span><input type="text" class="opcao-input" value="${o.texto}" oninput="${arrName}[${i}].opcoes[${oi}].texto=this.value" onkeydown="onOpcaoKeydown(event,'${arrName}',${i},${oi},'${listId}')" placeholder="Texto da opção..." style="flex:1;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:.83rem;font-family:var(--font);outline:none;"><button class="btn btn-danger btn-xs" onclick="${arrName}[${i}].opcoes.splice(${oi},1);${arrName}[${i}].opcoes.forEach((o,i)=>o.num=i+1);render${rfn}()">✕</button></div>`).join('')}
       <button class="btn btn-ghost btn-xs" onclick="addOpcaoComFoco('${arrName}',${i},'${listId}')">+ Opção</button>
     </div>
   </div>`;
