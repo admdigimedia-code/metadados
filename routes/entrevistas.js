@@ -7,7 +7,7 @@ const { authMiddleware, adminOnly, adminOrGestor } = require('../middleware');
 router.get('/', authMiddleware, async (req, res) => {
   const { pesquisaId, userId, dia } = req.query;
   try {
-    let q = `SELECT * FROM entrevistas WHERE 1=1`;
+    let q = `SELECT id, pesquisa_id, user_id, user_nome, respostas, duracao, cidade, dia, ts, criado_em FROM entrevistas WHERE 1=1`;
     const params = [];
     if (pesquisaId) { params.push(pesquisaId); q += ` AND pesquisa_id=$${params.length}`; }
     if (userId)     { params.push(userId);     q += ` AND user_id=$${params.length}`; }
@@ -19,6 +19,19 @@ router.get('/', authMiddleware, async (req, res) => {
       respostas: e.respostas, duracao: e.duracao, cidade: e.cidade,
       dia: e.dia, ts: e.ts
     })));
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// GET /api/entrevistas/stats?pesquisaId=xxx — contagem por dia para dashboard
+router.get('/stats', authMiddleware, adminOrGestor, async (req, res) => {
+  const { pesquisaId } = req.query;
+  try {
+    let q = `SELECT dia, COUNT(*)::int AS total FROM entrevistas WHERE 1=1`;
+    const params = [];
+    if (pesquisaId) { params.push(pesquisaId); q += ` AND pesquisa_id=$${params.length}`; }
+    q += ` GROUP BY dia ORDER BY dia DESC LIMIT 60`;
+    const r = await pool.query(q, params);
+    res.json(r.rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
