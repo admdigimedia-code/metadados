@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const iaRoutes = require('./routes/ia');
 const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
@@ -11,6 +12,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(helmet({ contentSecurityPolicy: false }));
+app.use('/api/ia', iaRoutes);
 app.use(compression());
 
 const allowedOrigins = [
@@ -50,8 +52,13 @@ app.use(express.static(frontendPath));
 app.get('/sistema', (req, res) => {
   res.sendFile(path.join(frontendPath, 'sistema', 'index.html'));
 });
+
 app.get('/sistema/*', (req, res) => {
   res.sendFile(path.join(frontendPath, 'sistema', 'index.html'));
+});
+
+app.get('/relatorios', (req, res) => {
+  res.sendFile(path.join(frontendPath, 'relatorios', 'index.html'));
 });
 
 app.get('*', (req, res) => {
